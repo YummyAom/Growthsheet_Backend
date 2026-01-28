@@ -1,0 +1,21 @@
+server:
+  port: ${PRODUCTSERVICE_PORT:8082}
+
+spring:
+  application:
+    name: product-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/growthsheet
+    username: growthsheet
+    password: growthsheet888
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: ${JWT_EXP_MS}

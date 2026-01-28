@@ -1,0 +1,12 @@
+# ignore build folder
+target/
+build/
+
+# ignore log files
+*.log
+
+# ignore environment files
+.env
+
+# ignore OS files
+.DS_Store
