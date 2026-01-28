@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateSheetRequest(
+
         @NotBlank(message = "กรุณาระบุชื่อชีทเรียน")
         String title,
 
@@ -40,7 +41,7 @@ public record CreateSheetRequest(
         @NotEmpty(message = "กรุณาระบุแฮชแท็กอย่างน้อย 1 รายการ")
         List<String> hashtags,
 
-        @NotBlank(message = "กรุณาอัปโหลดรูปภาพตัวอย่าง")
-        String previewUrl
-) {
-}
+        @NotEmpty(message = "กรุณาอัปโหลดรูปภาพตัวอย่างอย่างน้อย 1 รูป")
+        @Size(max = 10, message = "อัปโหลดรูปได้ไม่เกิน 10 รูป")
+        List<@NotBlank String> previewUrls
+) {}

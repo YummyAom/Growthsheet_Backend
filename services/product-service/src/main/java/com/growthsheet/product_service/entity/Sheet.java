@@ -1,7 +1,9 @@
 package com.growthsheet.product_service.entity;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,7 +14,7 @@ import jakarta.persistence.*;
 public class Sheet {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     // ===== FK (logical) =====
@@ -38,10 +40,10 @@ public class Sheet {
     private String courseName;
 
     private String faculty;
-    
+
     @Column(nullable = false)
     private Integer studyYear;
-    
+
     @Column(nullable = false)
     private String academicYear;
 
@@ -54,7 +56,10 @@ public class Sheet {
     @Column(nullable = false)
     private String fileUrl;
 
-    private String previewUrl;
+    @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private List<SheetImage> previewImages = new ArrayList<>();
+
     private Integer pageCount;
 
     // ===== admin =====
@@ -62,6 +67,8 @@ public class Sheet {
     private SheetStatus status = SheetStatus.PENDING;
 
     private String adminNote;
+
+    @Column(nullable = false)
     private Boolean isPublished = true;
 
     // ===== hashtags =====
@@ -154,8 +161,8 @@ public class Sheet {
         return pageCount;
     }
 
-    public String getPreviewUrl() {
-        return previewUrl;
+    public List<SheetImage> getPreviewImages() {
+        return previewImages;
     }
 
     public Integer getStudyYear() {
@@ -210,8 +217,8 @@ public class Sheet {
         this.pageCount = pageCount;
     }
 
-    public void setPreviewUrl(String previewUrl) {
-        this.previewUrl = previewUrl;
+    public void setPreviewImages(List<SheetImage> previewImages) {
+        this.previewImages = previewImages;
     }
 
     public void setStudyYear(Integer studyYear) {
