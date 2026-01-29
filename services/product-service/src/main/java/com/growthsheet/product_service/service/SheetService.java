@@ -1,8 +1,6 @@
 package com.growthsheet.product_service.service;
 
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -12,98 +10,169 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 
+import com.growthsheet.product_service.dto.CategoryDTO;
+import com.growthsheet.product_service.dto.SellerDTO;
+import com.growthsheet.product_service.dto.UniversityDTO;
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
+import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetResponse;
 import com.growthsheet.product_service.entity.Category;
 import com.growthsheet.product_service.entity.Hashtag;
 import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.entity.SheetStatus;
+import com.growthsheet.product_service.entity.User;
 import com.growthsheet.product_service.repository.CategoryRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 import com.growthsheet.product_service.repository.UniversityRepository;
+import com.growthsheet.product_service.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class SheetService {
 
-    private final SheetRepository sheetRepo;
-    private final CategoryRepository categoryRepo;
-    private final HashtagService hashtagService;
-    private final SheetImageService sheetImageService;
-    private final UniversityService universityService;
+        private final SheetRepository sheetRepo;
+        private final CategoryRepository categoryRepo;
+        private final HashtagService hashtagService;
+        private final SheetImageService sheetImageService;
+        private final UniversityService universityService;
+        private final UserRepository userRepo;
 
-    public SheetService(
-            SheetRepository sheetRepo,
-            CategoryRepository categoryRepo,
-            UniversityRepository universityRepo,
-            HashtagService hashtagService,
-            SheetImageService sheetImageService,
-            UniversityService universityService) {
+        public SheetService(
+                        SheetRepository sheetRepo,
+                        CategoryRepository categoryRepo,
+                        HashtagService hashtagService,
+                        SheetImageService sheetImageService,
+                        UniversityService universityService,
+                        UserRepository userRepo) {
 
-        this.sheetRepo = sheetRepo;
-        this.categoryRepo = categoryRepo;
-        this.hashtagService = hashtagService;
-        this.sheetImageService = sheetImageService;
-        this.universityService = universityService;
-    }
+                this.sheetRepo = sheetRepo;
+                this.categoryRepo = categoryRepo;
+                this.hashtagService = hashtagService;
+                this.sheetImageService = sheetImageService;
+                this.universityService = universityService;
+                this.userRepo = userRepo;
+        }
 
-    @Transactional
-    public SheetResponse createSheet(CreateSheetRequest req, UUID sellerId) {
+        @Transactional
+        public SheetResponse createSheet(CreateSheetRequest req, UUID sellerId) {
 
-        Category category = categoryRepo.findById(req.categoryId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Category not found"));
+                Category category = categoryRepo.findById(req.categoryId())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Category not found"));
 
-        Sheet sheet = new Sheet();
-        sheet.setUniversity(universityService.getByIdOrNull(req.universityId()));
-        sheet.setTitle(req.title());
-        sheet.setDescription(req.description());
-        sheet.setPrice(req.price());
-        sheet.setFileUrl(req.fileUrl());
+                Sheet sheet = new Sheet();
+                sheet.setUniversity(universityService.findOrNull(req.universityId()));
+                sheet.setTitle(req.title());
+                sheet.setDescription(req.description());
+                sheet.setPrice(req.price());
+                sheet.setFileUrl(req.fileUrl());
 
-        sheet.setCourseCode(req.courseCode());
-        sheet.setCourseName(req.courseName());
-        sheet.setStudyYear(req.studyYear());
-        sheet.setAcademicYear(req.academicYear());
+                sheet.setCourseCode(req.courseCode());
+                sheet.setCourseName(req.courseName());
+                sheet.setStudyYear(req.studyYear());
+                sheet.setAcademicYear(req.academicYear());
 
-        sheet.setCategory(category);
-        sheet.setSellerId(
-                UUID.fromString("20a9ecd8-93c5-499c-b7cf-3045396d7121"));
-        sheet.setStatus(SheetStatus.APPROVED);
-        sheet.setIsPublished(true);
+                sheet.setCategory(category);
+                sheet.setSellerId(
+                                UUID.fromString("20a9ecd8-93c5-499c-b7cf-3045396d7121"));
+                sheet.setStatus(SheetStatus.APPROVED);
+                sheet.setIsPublished(true);
 
-        // hashtags
-        sheet.setHashtags(
-                hashtagService.resolveHashtags(req.hashtags()));
+                // hashtags
+                sheet.setHashtags(
+                                hashtagService.resolveHashtags(req.hashtags()));
 
-        // preview images (delegated)
-        sheetImageService.attachPreviewImages(
-                sheet,
-                req.previewUrls());
+                // preview images (delegated)
+                sheetImageService.attachPreviewImages(
+                                sheet,
+                                req.previewUrls());
 
-        sheetRepo.save(sheet);
+                sheetRepo.save(sheet);
 
-        return new SheetResponse(
-                sheet.getId(),
-                sheet.getTitle(),
-                sheet.getPrice(),
-                sheet.getStatus().name());
-    }
+                return new SheetResponse(
+                                sheet.getId(),
+                                sheet.getTitle(),
+                                sheet.getPrice(),
+                                sheet.getStatus().name());
+        }
 
-    public Page<SheetResponse> getSheets(int page, int size) {
+        public Page<ProductResponseDTO> getSheets(int page, int size) {
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        return sheetRepo.findByStatus(SheetStatus.APPROVED, pageable)
-                .map(sheet -> new SheetResponse(
-                        sheet.getId(),
-                        sheet.getTitle(),
-                        sheet.getPrice(),
-                        sheet.getStatus().name()));
-    }
+                return sheetRepo.findByStatus(SheetStatus.APPROVED, pageable)
+                                .map(sheet -> {
+
+                                        SellerDTO seller = userRepo.findById(sheet.getSellerId())
+                                                        .map(u -> new SellerDTO(u.getId(), u.getName()))
+                                                        .orElse(null);
+
+                                        return new ProductResponseDTO(
+                                                        sheet.getId(),
+                                                        sheet.getTitle(),
+                                                        sheet.getDescription(),
+                                                        sheet.getPrice(),
+
+                                                        // image
+                                                        (sheet.getPreviewImages() == null
+                                                                        || sheet.getPreviewImages().isEmpty())
+                                                                                        ? null
+                                                                                        : sheet.getPreviewImages()
+                                                                                                        .get(0)
+                                                                                                        .getImageUrl(),
+
+                                                        sheet.getFileUrl(),
+
+                                                        // university
+                                                        sheet.getUniversity() == null
+                                                                        ? null
+                                                                        : new UniversityDTO(
+                                                                                        sheet.getUniversity().getId(),
+                                                                                        sheet.getUniversity()
+                                                                                                        .getNameEn()),
+
+                                                        // category
+                                                        sheet.getCategory() == null
+                                                                        ? null
+                                                                        : new CategoryDTO(
+                                                                                        sheet.getCategory().getId(),
+                                                                                        sheet.getCategory().getName()),
+
+                                                        // tags
+                                                        sheet.getHashtags()
+                                                                        .stream()
+                                                                        .map(Hashtag::getName)
+                                                                        .toList(),
+
+                                                        // ratingCount
+                                                        sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
+
+                                                        // ratingAverage
+                                                        sheet.getAvarage_rating() == null
+                                                                        ? 0.0
+                                                                        : sheet.getAvarage_rating().doubleValue(),
+
+                                                        // seller
+                                                        seller,
+
+                                                        // isPublished
+                                                        sheet.getIsPublished(),
+
+                                                        // pageCount
+                                                        sheet.getPageCount(),
+
+                                                        // createdAt
+                                                        sheet.getCreatedAt(),
+
+                                                        // updatedAt
+                                                        sheet.getUpdatedAt());
+
+                                });
+        }
+
 }

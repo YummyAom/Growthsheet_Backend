@@ -2,6 +2,7 @@ package com.growthsheet.product_service.repository;
 
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.growthsheet.product_service.entity.Sheet;
@@ -12,5 +13,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface SheetRepository extends JpaRepository<Sheet, UUID> {
 
+    @EntityGraph(attributePaths = { "seller" })
     Page<Sheet> findByStatus(SheetStatus status, Pageable pageable);
 }

@@ -1,5 +1,7 @@
 package com.growthsheet.product_service.service;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,14 +18,22 @@ public class UniversityService {
         this.universityRepo = universityRepo;
     }
 
-    public University getByIdOrNull(Long id) {
-        if (id == null) {
+    // อันนี้ return null ได้จริง
+    public University findOrNull(Long id) {
+        if (id == null)
             return null;
-        }
+        return universityRepo.findById(id).orElse(null);
+    }
 
+    // อันนี้บังคับต้องมี
+    public University getById(Long id) {
         return universityRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "University not found"));
+    }
+
+    public List<University> getAll() {
+        return universityRepo.findAll();
     }
 }

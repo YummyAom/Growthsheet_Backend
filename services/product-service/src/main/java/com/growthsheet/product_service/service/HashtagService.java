@@ -28,7 +28,7 @@ public class HashtagService {
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .filter(tag -> !tag.isBlank())
-                .distinct()              // กันซ้ำ
+                .distinct()              
                 .map(this::findOrCreate)
                 .collect(Collectors.toSet());
     }

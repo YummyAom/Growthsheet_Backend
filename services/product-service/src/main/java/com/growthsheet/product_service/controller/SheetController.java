@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
+import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetResponse;
 import com.growthsheet.product_service.service.SheetService;
 
@@ -44,11 +45,13 @@ public class SheetController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<SheetResponse>> getSheets(
+    public ResponseEntity<Page<ProductResponseDTO>> getSheets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(sheetService.getSheets(page, size));
     }
+
+    
 
 }

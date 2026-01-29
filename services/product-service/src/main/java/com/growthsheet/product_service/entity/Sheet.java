@@ -1,6 +1,7 @@
 package com.growthsheet.product_service.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +57,9 @@ public class Sheet {
     @Column(nullable = false)
     private String fileUrl;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
     @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private List<SheetImage> previewImages = new ArrayList<>();
@@ -71,12 +75,45 @@ public class Sheet {
     @Column(nullable = false)
     private Boolean isPublished = true;
 
+    private BigDecimal avarage_rating;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "review_count")
+    private Integer reviewCount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private User seller;
+
     // ===== hashtags =====
     @ManyToMany
     @JoinTable(name = "sheet_hashtags", joinColumns = @JoinColumn(name = "sheet_id"), inverseJoinColumns = @JoinColumn(name = "hashtag_id"))
     private Set<Hashtag> hashtags = new HashSet<>();
 
     // ===== getters / setters =====
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public User getSeller() {
+        return seller;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -115,6 +152,10 @@ public class Sheet {
 
     public void setStatus(SheetStatus status) {
         this.status = status;
+    }
+
+    public BigDecimal getAvarage_rating() {
+        return avarage_rating;
     }
 
     public String getAcademicYear() {
@@ -227,5 +268,9 @@ public class Sheet {
 
     public void setUniversity(University university) {
         this.university = university;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
