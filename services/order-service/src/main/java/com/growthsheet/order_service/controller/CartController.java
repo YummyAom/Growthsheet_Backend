@@ -24,6 +24,11 @@ public class CartController {
         this.cartService = cartService;
     }
 
+    @GetMapping
+    public String hello(){
+        return "Hello cart";
+    }
+    
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @RequestHeader("X-USER-ID") UUID userId,
@@ -32,7 +37,7 @@ public class CartController {
         return ResponseEntity.ok(cartService.addToCart(userId, req));
     }
 
-    @GetMapping
+    @GetMapping("/user")
     public ResponseEntity<CartResponse> getCart(
             @RequestHeader("X-USER-ID") UUID userId) {
 
