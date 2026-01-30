@@ -1,21 +1,19 @@
 package com.growthsheet.order_service.dto.response;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class OrderResponse {
+public class CartResponse {
 
-    private UUID orderId;
+    private UUID cartId;
     private UUID userId;
-    private String status;
     private BigDecimal totalPrice;
-
     private List<Item> items;
 
     @Getter

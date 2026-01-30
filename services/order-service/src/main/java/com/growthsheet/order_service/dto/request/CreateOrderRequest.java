@@ -17,6 +17,9 @@ public class CreateOrderRequest {
     @Setter
     public static class Item {
         private UUID sheetId;
-        private BigDecimal price; 
+        private String sheetName;
+        private String sellerName;
+        private BigDecimal price;
     }
+
 }

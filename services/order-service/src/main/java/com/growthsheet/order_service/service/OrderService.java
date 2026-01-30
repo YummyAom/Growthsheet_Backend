@@ -7,10 +7,13 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.growthsheet.order_service.dto.request.CreateOrderRequest;
+import com.growthsheet.order_service.dto.request.CheckoutRequest;
 import com.growthsheet.order_service.dto.response.OrderResponse;
+import com.growthsheet.order_service.entity.Cart;
+import com.growthsheet.order_service.entity.CartItem;
 import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.entity.OrderItem;
+import com.growthsheet.order_service.repository.CartRepository;
 import com.growthsheet.order_service.repository.OrderRepository;
 
 import jakarta.transaction.Transactional;
@@ -19,44 +22,92 @@ import jakarta.transaction.Transactional;
 @Transactional
 
 public class OrderService {
-    private final OrderRepository orderRepository;
+    private final OrderRepository orderRepo;
+    private final CartRepository cartRepo;
 
     public OrderService(
-            OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+            OrderRepository orderRepo,
+            CartRepository cartRepo) {
+        this.orderRepo = orderRepo;
+        this.cartRepo = cartRepo;
     }
 
-    public OrderResponse createOrder(UUID userId, CreateOrderRequest req) {
+    public Order checkout(UUID userId, CheckoutRequest req) {
+
+        Cart cart = cartRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart empty"));
 
         Order order = new Order();
         order.setUserId(userId);
         order.setStatus("PENDING");
 
-        BigDecimal total = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal orderTotal = BigDecimal.ZERO;
 
-        for (CreateOrderRequest.Item i : req.getItems()) {
+        // === เอาเฉพาะ item ที่เลือก ===
+        for (CartItem c : cart.getItems()) {
+            if (req.getCartItemIds().contains(c.getId())) {
 
-            OrderItem item = new OrderItem();
-            item.setSheetId(i.getSheetId());
-            item.setPrice(i.getPrice());
+                OrderItem oi = new OrderItem();
+                oi.setSheetId(c.getSheetId());
+                oi.setSheetName(c.getSheetName());
+                oi.setSellerName(c.getSellerName());
+                oi.setPrice(c.getPrice());
+                oi.setOrder(order);
 
-            item.setOrder(order);
-            orderItems.add(item);
-            total = total.add(i.getPrice());
+                orderItems.add(oi);
+                orderTotal = orderTotal.add(c.getPrice());
+            }
         }
 
         order.setItems(orderItems);
-        order.setTotalPrice(total);
+        order.setTotalPrice(orderTotal);
 
-        Order savedOrder = orderRepository.save(order);
+        Order savedOrder = orderRepo.save(order);
+
+        // === ลบ item ที่จ่ายแล้วออกจาก cart ===
+        cart.getItems().removeIf(i -> req.getCartItemIds().contains(i.getId()));
+
+        // === คำนวณ total cart ใหม่ ===
+        BigDecimal cartTotal = cart.getItems().stream()
+                .map(CartItem::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotalPrice(cartTotal);
+
+        cartRepo.save(cart);
+
+        return savedOrder;
+    }
+
+    public List<OrderResponse> getOrdersByUser(UUID userId) {
+        return orderRepo.findByUserId(userId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private OrderResponse mapToResponse(Order order) {
+
+        List<OrderResponse.Item> items = new ArrayList<>();
+
+        for (OrderItem i : order.getItems()) {
+            OrderResponse.Item item = new OrderResponse.Item();
+            item.setSheetId(i.getSheetId());
+            item.setSheetName(i.getSheetName());
+            item.setSellerName(i.getSellerName());
+            item.setPrice(i.getPrice());
+            items.add(item);
+        }
 
         OrderResponse res = new OrderResponse();
-        res.setOrderId(savedOrder.getId());
-        res.setUserId(savedOrder.getUserId());
-        res.setStatus(savedOrder.getStatus());
-        res.setTotalPrice(savedOrder.getTotalPrice());
+        res.setOrderId(order.getId());
+        res.setUserId(order.getUserId());
+        res.setStatus(order.getStatus());
+        res.setTotalPrice(order.getTotalPrice());
+        res.setItems(items);
 
         return res;
     }
+
 }

@@ -3,8 +3,6 @@ package com.growthsheet.order_service.entity;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -15,10 +13,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "order_items")
+@Table(name = "cart_items")
 @Getter
 @Setter
-public class OrderItem {
+public class CartItem {
 
     @Id
     @GeneratedValue
@@ -30,7 +28,6 @@ public class OrderItem {
     private BigDecimal price;
 
     @ManyToOne
-    @JoinColumn(name = "order_id")
-    @JsonIgnore
-    private Order order;
+    @JoinColumn(name = "cart_id")
+    private Cart cart;
 }

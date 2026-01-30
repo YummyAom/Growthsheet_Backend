@@ -1,6 +1,7 @@
 package com.growthsheet.order_service.entity;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,19 +15,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "orders")
-@Getter
-@Setter
-public class Order {
+@Table(name = "carts")
+@Getter @Setter
+public class Cart {
 
     @Id
     @GeneratedValue
     private UUID id;
 
     private UUID userId;
-    private String status; 
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> items = new ArrayList<>();
 }

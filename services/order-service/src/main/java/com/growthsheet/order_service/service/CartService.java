@@ -1,0 +1,75 @@
+package com.growthsheet.order_service.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.growthsheet.order_service.dto.response.AddToCartRequest;
+import com.growthsheet.order_service.dto.response.CartResponse;
+import com.growthsheet.order_service.entity.Cart;
+import com.growthsheet.order_service.entity.CartItem;
+import com.growthsheet.order_service.repository.CartRepository;
+
+import jakarta.transaction.Transactional;
+
+@Service
+@Transactional
+public class CartService {
+    private final CartRepository cartRepository;
+
+    public CartService(
+            CartRepository cartRepository) {
+        this.cartRepository = cartRepository;
+    }
+
+    public CartResponse addToCart(UUID userId, AddToCartRequest req) {
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    Cart c = new Cart();
+                    c.setUserId(userId);
+                    return c;
+                });
+
+        CartItem item = new CartItem();
+        item.setSheetId(req.getSheetId());
+        item.setSheetName(req.getSheetName());
+        item.setSellerName(req.getSellerName());
+        item.setPrice(req.getPrice());
+        item.setCart(cart);
+
+        cart.getItems().add(item);
+        cart.setTotalPrice(
+                cart.getTotalPrice().add(req.getPrice()));
+
+        return map(cartRepository.save(cart));
+    }
+
+    public CartResponse getCart(UUID userId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+        return map(cart);
+    }
+
+    private CartResponse map(Cart cart) {
+        CartResponse res = new CartResponse();
+        res.setCartId(cart.getId());
+        res.setUserId(cart.getUserId());
+        res.setTotalPrice(cart.getTotalPrice());
+
+        List<CartResponse.Item> items = cart.getItems().stream().map(i -> {
+            CartResponse.Item it = new CartResponse.Item();
+            it.setSheetId(i.getSheetId());
+            it.setSheetName(i.getSheetName());
+            it.setSellerName(i.getSellerName());
+            it.setPrice(i.getPrice());
+            return it;
+        }).toList();
+
+        res.setItems(items);
+        return res;
+    }
+}

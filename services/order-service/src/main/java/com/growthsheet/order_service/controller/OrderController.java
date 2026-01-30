@@ -1,19 +1,20 @@
 package com.growthsheet.order_service.controller;
 
+import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.growthsheet.order_service.dto.request.CreateOrderRequest;
-import com.growthsheet.order_service.dto.response.AddOrderRespose;
+import com.growthsheet.order_service.dto.request.CheckoutRequest;
 import com.growthsheet.order_service.dto.response.OrderResponse;
-import com.growthsheet.order_service.repository.OrderRepository;
+import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.service.OrderService;
 
 @RestController
@@ -22,19 +23,23 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService
+    ) {
         this.orderService = orderService;
     }
 
-    @PostMapping("/addOrder")
-    public ResponseEntity<OrderResponse> createOrder(
-            @RequestHeader("X-USER-ID") UUID userId,
-            @RequestBody CreateOrderRequest req) {
+    @PostMapping("/checkout")
+    public ResponseEntity<Order> checkout(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @RequestBody CheckoutRequest checkoutRequest
+    ) {
+        return ResponseEntity.ok(orderService.checkout(userId, checkoutRequest));
+    }
 
-        OrderResponse res = orderService.createOrder(userId, req);
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderResponse>> getOrders(
+            @PathVariable UUID userId) {
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(res);
+        return ResponseEntity.ok(orderService.getOrdersByUser(userId));
     }
 }
