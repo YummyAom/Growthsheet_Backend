@@ -1,0 +1,21 @@
+server:
+  port: ${ORDERSERVICE_PORT}
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: ${JWT_EXP_MS}
