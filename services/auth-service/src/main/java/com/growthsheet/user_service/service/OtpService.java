@@ -13,13 +13,13 @@ import jakarta.transaction.Transactional;
 @Service
 public class OtpService {
     private OtpRepository otpRep;
-    private EmailService emailService;
+    // private EmailService emailService;
 
     public OtpService(
             OtpRepository otpRep,
             EmailService emailService) {
         this.otpRep = otpRep;
-        this.emailService = emailService;
+        // this.emailService = emailService;
     }
 
     public void sendOtp(String email) {

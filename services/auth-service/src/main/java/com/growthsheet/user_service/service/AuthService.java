@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.growthsheet.user_service.dto.requests.LoginRequest;
@@ -16,7 +15,6 @@ import com.growthsheet.user_service.respository.UserRepository;
 import com.growthsheet.user_service.security.Jwtutil;
 import com.growthsheet.user_service.security.PasswordUtil;
 
-import jakarta.validation.Valid;
 
 @Service
 public class AuthService {

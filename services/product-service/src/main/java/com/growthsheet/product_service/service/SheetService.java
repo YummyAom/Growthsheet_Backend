@@ -1,5 +1,6 @@
 package com.growthsheet.product_service.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -20,10 +21,8 @@ import com.growthsheet.product_service.entity.Category;
 import com.growthsheet.product_service.entity.Hashtag;
 import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.entity.SheetStatus;
-import com.growthsheet.product_service.entity.User;
 import com.growthsheet.product_service.repository.CategoryRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
-import com.growthsheet.product_service.repository.UniversityRepository;
 import com.growthsheet.product_service.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -173,6 +172,75 @@ public class SheetService {
                                                         sheet.getUpdatedAt());
 
                                 });
+        }
+
+        public ProductResponseDTO getSheet(UUID sheetId) {
+
+                Sheet sheet = sheetRepo.findById(sheetId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Sheet not found"));
+
+                SellerDTO seller = userRepo.findById(sheet.getSellerId())
+                                .map(u -> new SellerDTO(u.getId(), u.getName()))
+                                .orElse(null);
+
+                return new ProductResponseDTO(
+                                sheet.getId(),
+                                sheet.getTitle(),
+                                sheet.getDescription(),
+                                sheet.getPrice(),
+
+                                // image
+                                (sheet.getPreviewImages() == null || sheet.getPreviewImages().isEmpty())
+                                                ? null
+                                                : sheet.getPreviewImages().get(0).getImageUrl(),
+
+                                sheet.getFileUrl(),
+
+                                // university
+                                sheet.getUniversity() == null
+                                                ? null
+                                                : new UniversityDTO(
+                                                                sheet.getUniversity().getId(),
+                                                                sheet.getUniversity().getNameEn()),
+
+                                // category
+                                sheet.getCategory() == null
+                                                ? null
+                                                : new CategoryDTO(
+                                                                sheet.getCategory().getId(),
+                                                                sheet.getCategory().getName()),
+
+                                // tags
+                                sheet.getHashtags() == null
+                                                ? List.of()
+                                                : sheet.getHashtags().stream()
+                                                                .map(Hashtag::getName)
+                                                                .toList(),
+
+                                // ratingCount
+                                sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
+
+                                // ratingAverage
+                                sheet.getAvarage_rating() == null
+                                                ? 0.0
+                                                : sheet.getAvarage_rating().doubleValue(),
+
+                                // seller
+                                seller,
+
+                                // isPublished
+                                sheet.getIsPublished(),
+
+                                // pageCount
+                                sheet.getPageCount(),
+
+                                // createdAt
+                                sheet.getCreatedAt(),
+
+                                // updatedAt
+                                sheet.getUpdatedAt());
         }
 
 }
