@@ -1,4 +1,4 @@
-package com.growthsheet.order_service.dto.respose;
+package com.growthsheet.order_service.dto.response;
 
 public record AddOrderRespose(
     String id,
