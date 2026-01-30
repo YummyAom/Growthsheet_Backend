@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -23,22 +22,25 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService
-    ) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @GetMapping
+    public String hello() {
+        return "Hello order";
     }
 
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(
-        @RequestHeader("X-USER-ID") UUID userId,
-        @RequestBody CheckoutRequest checkoutRequest
-    ) {
+            @RequestHeader("X-USER-ID") UUID userId,
+            @RequestBody CheckoutRequest checkoutRequest) {
         return ResponseEntity.ok(orderService.checkout(userId, checkoutRequest));
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user")
     public ResponseEntity<List<OrderResponse>> getOrders(
-            @PathVariable UUID userId) {
+            @RequestHeader("X-USER-ID") UUID userId) {
 
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
     }
