@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.growthsheet.order_service.dto.request.CreateOrderRequest;
+import com.growthsheet.order_service.dto.response.OrderResponse;
 import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.entity.OrderItem;
 import com.growthsheet.order_service.repository.OrderRepository;
@@ -24,7 +25,8 @@ public class OrderService {
             OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
     }
-    public Order createOrder(UUID userId, CreateOrderRequest req) {
+
+    public OrderResponse createOrder(UUID userId, CreateOrderRequest req) {
 
         Order order = new Order();
         order.setUserId(userId);
@@ -47,6 +49,14 @@ public class OrderService {
         order.setItems(orderItems);
         order.setTotalPrice(total);
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        OrderResponse res = new OrderResponse();
+        res.setOrderId(savedOrder.getId());
+        res.setUserId(savedOrder.getUserId());
+        res.setStatus(savedOrder.getStatus());
+        res.setTotalPrice(savedOrder.getTotalPrice());
+
+        return res;
     }
 }
