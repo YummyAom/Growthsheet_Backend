@@ -72,4 +72,25 @@ public class CartService {
         res.setItems(items);
         return res;
     }
+
+    public void removeItem(UUID userId, UUID cartItemId) {
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
+
+        // ลบราคาออกจาก total
+        cart.setTotalPrice(
+                cart.getTotalPrice().subtract(item.getPrice()));
+
+        // ลบ item
+        cart.getItems().remove(item);
+
+        cartRepository.save(cart);
+    }
+
 }

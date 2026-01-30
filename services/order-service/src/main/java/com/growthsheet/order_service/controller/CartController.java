@@ -3,7 +3,9 @@ package com.growthsheet.order_service.controller;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,10 +27,10 @@ public class CartController {
     }
 
     @GetMapping
-    public String hello(){
+    public String hello() {
         return "Hello cart";
     }
-    
+
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @RequestHeader("X-USER-ID") UUID userId,
@@ -42,5 +44,14 @@ public class CartController {
             @RequestHeader("X-USER-ID") UUID userId) {
 
         return ResponseEntity.ok(cartService.getCart(userId));
+    }
+
+    @DeleteMapping("/{cartItemId}")
+    public ResponseEntity<Void> removeItem(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable UUID cartItemId) {
+
+        cartService.removeItem(userId, cartItemId);
+        return ResponseEntity.noContent().build();
     }
 }
