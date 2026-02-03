@@ -26,7 +26,7 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @GetMapping
+    @GetMapping("/")
     public String hello() {
         return "Hello order";
     }

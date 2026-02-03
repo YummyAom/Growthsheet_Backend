@@ -1,0 +1,32 @@
+server:
+  port: ${APIGATEWAY_PORT:8080}
+
+spring:
+  application:
+    name: apigateway-service
+    web-application-type: reactive   # บังคับใช้ WebFlux (Gateway ต้องเป็น reactive)
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL}
+          predicates:
+            - Path=/auth/**
+          filters:
+            - PrefixPath=/api
+
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL}
+          predicates:
+            - Path=/order/**
+          filters:
+            - PrefixPath=/api
+logging:
+  level:
+    com.growthsheet.apigateway_service: INFO
+    org.springframework.cloud.gateway: INFO
+
+eureka:
+  client:
+    enabled: false

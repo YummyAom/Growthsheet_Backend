@@ -1,4 +1,4 @@
-package com.growthsheet.user_service.exception;
+package com.growthsheet.activity_service.exception;
 
 import java.util.HashMap;
 import java.util.Map;
