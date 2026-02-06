@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:7
+    container_name: growthsheet-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass growthsheet888
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - growthsheet-network
   postgres:
     container_name: ms_pg_sql
     image: postgres:16
@@ -31,20 +45,14 @@ services:
       - microservices-net
     restart: unless-stopped
 
-  maildev:
-    container_name: ms_maildev
-    image: maildev/maildev
-    ports:
-      - "1080:1080"   # Web UI
-      - "1025:1025"   # SMTP
-    networks:
-      - microservices-net
-    restart: unless-stopped
 
 networks:
   microservices-net:
+    driver: bridge
+  growthsheet-network:
     driver: bridge
 
 volumes:
   postgres:
   pgadmin:
+  redis_data:

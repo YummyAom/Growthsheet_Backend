@@ -24,12 +24,20 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "user_photo_url", nullable = true)
+    private String userPhotoUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
 
     // ===== getters & setters =====
-
+    public String getUserPhotoUrl() {
+        return userPhotoUrl;
+    }
+    public void setUserPhotoUrl(String userPhotoUrl) {
+        this.userPhotoUrl = userPhotoUrl;
+    }
     public UUID getId() {
         return id;
     }
@@ -49,23 +57,23 @@ public class User {
     public String getEmail() {
         return email;
     }
-    
+
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
     public String getPassword() {
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

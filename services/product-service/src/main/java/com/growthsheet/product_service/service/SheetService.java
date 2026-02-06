@@ -1,6 +1,7 @@
 package com.growthsheet.product_service.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -44,7 +45,6 @@ public class SheetService {
                         SheetImageService sheetImageService,
                         UniversityService universityService,
                         UserRepository userRepo) {
-
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -54,19 +54,24 @@ public class SheetService {
         }
 
         @Transactional
-        public SheetResponse createSheet(CreateSheetRequest req, UUID sellerId) {
+        public SheetResponse createSheet(
+                        CreateSheetRequest req,
+                        UUID sellerId,
+                        Map<String, Object> pdf,
+                        List<String> images) {
 
                 Category category = categoryRepo.findById(req.categoryId())
                                 .orElseThrow(() -> new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND,
-                                                "Category not found"));
+                                                HttpStatus.NOT_FOUND, "Category not found"));
 
                 Sheet sheet = new Sheet();
                 sheet.setUniversity(universityService.findOrNull(req.universityId()));
                 sheet.setTitle(req.title());
                 sheet.setDescription(req.description());
                 sheet.setPrice(req.price());
-                sheet.setFileUrl(req.fileUrl());
+
+                sheet.setFileUrl( (String) pdf.get("url"));
+                sheet.setPageCount((Integer) pdf.get("pageCount"));
 
                 sheet.setCourseCode(req.courseCode());
                 sheet.setCourseName(req.courseName());
@@ -74,27 +79,18 @@ public class SheetService {
                 sheet.setAcademicYear(req.academicYear());
 
                 sheet.setCategory(category);
-                sheet.setSellerId(
-                                UUID.fromString("20a9ecd8-93c5-499c-b7cf-3045396d7121"));
+                sheet.setSellerId(sellerId);
                 sheet.setStatus(SheetStatus.APPROVED);
                 sheet.setIsPublished(true);
 
-                // hashtags
                 sheet.setHashtags(
                                 hashtagService.resolveHashtags(req.hashtags()));
 
-                // preview images (delegated)
-                sheetImageService.attachPreviewImages(
-                                sheet,
-                                req.previewUrls());
-
                 sheetRepo.save(sheet);
 
-                return new SheetResponse(
-                                sheet.getId(),
-                                sheet.getTitle(),
-                                sheet.getPrice(),
-                                sheet.getStatus().name());
+                sheetImageService.attachPreviewImages(sheet, images);
+
+                return SheetResponse.from(sheet);
         }
 
         public Page<ProductResponseDTO> getSheets(int page, int size) {
@@ -152,9 +148,9 @@ public class SheetService {
                                                         sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
 
                                                         // ratingAverage
-                                                        sheet.getAvarage_rating() == null
+                                                        sheet.getAverageRating() == null
                                                                         ? 0.0
-                                                                        : sheet.getAvarage_rating().doubleValue(),
+                                                                        : sheet.getAverageRating().doubleValue(),
 
                                                         // seller
                                                         seller,
@@ -223,9 +219,9 @@ public class SheetService {
                                 sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
 
                                 // ratingAverage
-                                sheet.getAvarage_rating() == null
+                                sheet.getAverageRating() == null
                                                 ? 0.0
-                                                : sheet.getAvarage_rating().doubleValue(),
+                                                : sheet.getAverageRating().doubleValue(),
 
                                 // seller
                                 seller,

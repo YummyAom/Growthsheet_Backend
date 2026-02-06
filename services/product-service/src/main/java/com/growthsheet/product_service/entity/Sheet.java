@@ -1,14 +1,9 @@
 package com.growthsheet.product_service.entity;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import jakarta.persistence.*;
+import java.util.*;
 
 @Entity
 @Table(name = "sheets")
@@ -18,34 +13,32 @@ public class Sheet {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // ===== FK (logical) =====
     @Column(name = "seller_id", nullable = false)
     private UUID sellerId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "university_id")
     private University university;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // ===== sheet info =====
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "course_code", nullable = false)
     private String courseCode;
 
-    @Column(nullable = false)
+    @Column(name = "course_name", nullable = false)
     private String courseName;
 
     private String faculty;
 
-    @Column(nullable = false)
+    @Column(name = "study_year", nullable = false)
     private Integer studyYear;
 
-    @Column(nullable = false)
+    @Column(name = "academic_year", nullable = false)
     private String academicYear;
 
     @Column(columnDefinition = "TEXT")
@@ -54,223 +47,125 @@ public class Sheet {
     @Column(nullable = false)
     private BigDecimal price = BigDecimal.ZERO;
 
-    @Column(nullable = false)
+    @Column(name = "file_url", nullable = false)
     private String fileUrl;
 
-    @Column(name = "created_at")
+    @Column(name = "page_count")
+    private Integer pageCount;
+
+    @Enumerated(EnumType.STRING)
+    private SheetStatus status = SheetStatus.PENDING;
+
+    @Column(name = "admin_note")
+    private String adminNote;
+
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = true;
+
+    @Column(name = "average_rating")
+    private BigDecimal averageRating = BigDecimal.ZERO;
+
+    @Column(name = "review_count")
+    private Integer reviewCount = 0;
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private List<SheetImage> previewImages = new ArrayList<>();
 
-    private Integer pageCount;
-
-    // ===== admin =====
-    @Enumerated(EnumType.STRING)
-    private SheetStatus status = SheetStatus.PENDING;
-
-    private String adminNote;
-
-    @Column(nullable = false)
-    private Boolean isPublished = true;
-
-    private BigDecimal avarage_rating;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "review_count")
-    private Integer reviewCount;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private User seller;
-
-    // ===== hashtags =====
-    @ManyToMany
-    @JoinTable(name = "sheet_hashtags", joinColumns = @JoinColumn(name = "sheet_id"), inverseJoinColumns = @JoinColumn(name = "hashtag_id"))
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "sheet_hashtags",
+        joinColumns = @JoinColumn(name = "sheet_id"),
+        inverseJoinColumns = @JoinColumn(name = "hashtag_id")
+    )
     private Set<Hashtag> hashtags = new HashSet<>();
 
-    // ===== getters / setters =====
+    // ===== No-Args Constructor (JPA Required) =====
+    public Sheet() {}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    // ===== Lifecycle Hooks =====
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
-    public Integer getReviewCount() {
-        return reviewCount;
-    }
+    // ===== Getters and Setters =====
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public User getSeller() {
-        return seller;
-    }
+    public UUID getSellerId() { return sellerId; }
+    public void setSellerId(UUID sellerId) { this.sellerId = sellerId; }
 
-    public void setReviewCount(Integer reviewCount) {
-        this.reviewCount = reviewCount;
-    }
+    public University getUniversity() { return university; }
+    public void setUniversity(University university) { this.university = university; }
 
-    public UUID getId() {
-        return id;
-    }
+    public Category getCategory() { return category; }
+    public void setCategory(Category category) { this.category = category; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public UUID getSellerId() {
-        return sellerId;
-    }
+    public String getCourseCode() { return courseCode; }
+    public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
 
-    public void setSellerId(UUID sellerId) {
-        this.sellerId = sellerId;
-    }
+    public String getCourseName() { return courseName; }
+    public void setCourseName(String courseName) { this.courseName = courseName; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getFaculty() { return faculty; }
+    public void setFaculty(String faculty) { this.faculty = faculty; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public Integer getStudyYear() { return studyYear; }
+    public void setStudyYear(Integer studyYear) { this.studyYear = studyYear; }
 
-    public BigDecimal getPrice() {
-        return price;
-    }
+    public String getAcademicYear() { return academicYear; }
+    public void setAcademicYear(String academicYear) { this.academicYear = academicYear; }
 
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public SheetStatus getStatus() {
-        return status;
-    }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
-    public void setStatus(SheetStatus status) {
-        this.status = status;
-    }
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 
-    public BigDecimal getAvarage_rating() {
-        return avarage_rating;
-    }
+    public Integer getPageCount() { return pageCount; }
+    public void setPageCount(Integer pageCount) { this.pageCount = pageCount; }
 
-    public String getAcademicYear() {
-        return academicYear;
-    }
+    public SheetStatus getStatus() { return status; }
+    public void setStatus(SheetStatus status) { this.status = status; }
 
-    public String getAdminNote() {
-        return adminNote;
-    }
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
 
-    public Category getCategory() {
-        return category;
-    }
+    public Boolean getIsPublished() { return isPublished; }
+    public void setIsPublished(Boolean isPublished) { this.isPublished = isPublished; }
 
-    public String getCourseCode() {
-        return courseCode;
-    }
+    public BigDecimal getAverageRating() { return averageRating; }
+    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
 
-    public String getCourseName() {
-        return courseName;
-    }
+    public Integer getReviewCount() { return reviewCount; }
+    public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
 
-    public String getDescription() {
-        return description;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public String getFaculty() {
-        return faculty;
-    }
+    public List<SheetImage> getPreviewImages() { return previewImages; }
+    public void setPreviewImages(List<SheetImage> previewImages) { this.previewImages = previewImages; }
 
-    public String getFileUrl() {
-        return fileUrl;
-    }
-
-    public Set<Hashtag> getHashtags() {
-        return hashtags;
-    }
-
-    public Boolean getIsPublished() {
-        return isPublished;
-    }
-
-    public Integer getPageCount() {
-        return pageCount;
-    }
-
-    public List<SheetImage> getPreviewImages() {
-        return previewImages;
-    }
-
-    public Integer getStudyYear() {
-        return studyYear;
-    }
-
-    public University getUniversity() {
-        return university;
-    }
-
-    public void setAcademicYear(String academicYear) {
-        this.academicYear = academicYear;
-    }
-
-    public void setAdminNote(String adminNote) {
-        this.adminNote = adminNote;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public void setCourseCode(String courseCode) {
-        this.courseCode = courseCode;
-    }
-
-    public void setCourseName(String courseName) {
-        this.courseName = courseName;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setFaculty(String faculty) {
-        this.faculty = faculty;
-    }
-
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl;
-    }
-
-    public void setHashtags(Set<Hashtag> hashtags) {
-        this.hashtags = hashtags;
-    }
-
-    public void setIsPublished(Boolean isPublished) {
-        this.isPublished = isPublished;
-    }
-
-    public void setPageCount(Integer pageCount) {
-        this.pageCount = pageCount;
-    }
-
-    public void setPreviewImages(List<SheetImage> previewImages) {
-        this.previewImages = previewImages;
-    }
-
-    public void setStudyYear(Integer studyYear) {
-        this.studyYear = studyYear;
-    }
-
-    public void setUniversity(University university) {
-        this.university = university;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public Set<Hashtag> getHashtags() { return hashtags; }
+    public void setHashtags(Set<Hashtag> hashtags) { this.hashtags = hashtags; }
 }

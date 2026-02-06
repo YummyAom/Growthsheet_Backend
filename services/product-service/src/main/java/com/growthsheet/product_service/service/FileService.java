@@ -1,7 +1,9 @@
 package com.growthsheet.product_service.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
-
 
 @Service
 public class FileService {
@@ -21,7 +21,7 @@ public class FileService {
     private Cloudinary cloudinary;
 
     public Map<String, Object> uploadFile(MultipartFile file) {
-        // 1. ตรวจสอบเบื้องต้นว่ามีไฟล์ส่งมาจริงหรือไม่
+
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty or missing");
         }
@@ -33,21 +33,18 @@ public class FileService {
         String fileType;
 
         try {
-            // 2. แยกแยะประเภทไฟล์และประมวลผล
             if (isPdf(contentType)) {
                 pageCount = getPdfPageCount(file);
                 fileType = "PDF";
             } else if (isImage(contentType)) {
                 fileType = "IMAGE";
             } else {
-                // แจ้งเตือนกลับไปที่ Postman กรณีเลือกไฟล์ผิดประเภท
                 throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                         "Only PDF and Image files are supported");
             }
 
-            Map uploadResult = uploadToCloudinary(file);
+            Map uploadResult = uploadToCloudinary(file, fileType);
 
-            // 4. รวบรวมข้อมูลเพื่อส่งให้ Controller นำไปลง Database
             result.put("url", uploadResult.get("secure_url"));
             result.put("pageCount", pageCount);
             result.put("fileType", fileType);
@@ -56,9 +53,39 @@ public class FileService {
             return result;
 
         } catch (IOException e) {
-            // แจ้งเตือนกรณีเกิดปัญหาทางเทคนิคในการอ่านไฟล์หรืออัปโหลด
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "File processing failed: " + e.getMessage());
+        }
+    }
+
+    public List<String> uploadImage(List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image is empty or missing");
+        }
+
+        List<String> imageUrls = new ArrayList<>();
+        try {
+            for (MultipartFile image : images) {
+                // ตรวจสอบว่าเป็นรูปภาพจริงหรือไม่
+                String contentType = image.getContentType();
+                if (!isImage(contentType)) {
+                    throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                            "File " + image.getOriginalFilename() + " is not an image");
+                }
+
+                // เรียกใช้ฟังก์ชันอัปโหลดไป Cloudinary ที่คุณมีอยู่แล้ว
+                // โดยระบุประเภทเป็น "IMAGE" เพื่อให้แยกเข้าโฟลเดอร์ /images
+                Map<String, Object> uploadResult = uploadToCloudinary(image, "IMAGE");
+
+                // ดึงเฉพาะ secure_url มาเก็บไว้ใน List
+                imageUrls.add((String) uploadResult.get("secure_url"));
+            }
+
+            return imageUrls;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Image processing failed: " + e.getMessage());
         }
     }
 
@@ -73,23 +100,32 @@ public class FileService {
     }
 
     private int getPdfPageCount(MultipartFile file) throws IOException {
-        // ใช้ Apache PDFBox นับจำนวนหน้า
         try (PDDocument document = PDDocument.load(file.getInputStream())) {
             return document.getNumberOfPages();
         }
     }
 
-    @SuppressWarnings("unchecked") // บอก Java ว่าเราตรวจสอบความปลอดภัยของประเภทข้อมูลแล้ว
-    private Map<String, Object> uploadToCloudinary(MultipartFile file) throws IOException {
-        // 1. กำหนด Parameter สำหรับอัปโหลด
-        Map<String, Object> uploadParams = ObjectUtils.asMap(
-                "folder", "growthsheet_assets",
-                "resource_type", "auto",
-                "quality", "auto",
-                "fetch_format", "auto");
+    private Map<String, Object> uploadToCloudinary(
+            MultipartFile file,
+            String fileType
 
-        // 2. ทำการ Cast ผลลัพธ์จาก Cloudinary ให้เป็น Map<String, Object>
-        // uploader().upload() คืนค่าเป็น Map เฉยๆ (Raw Type) จึงต้องระบุประเภทใหม่
-        return (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), uploadParams);
+    ) throws IOException {
+        Map<String, Object> uploadParams = new HashMap<>();
+
+        if (fileType == "PDF") {
+            uploadParams.put("folder", "growthsheet_assets/pdf");
+        } else if (fileType == "IMAGE") {
+            uploadParams.put("folder", "growthsheet_assets/images");
+            uploadParams.put("quality", "auto");
+            uploadParams.put("fetch_format", "auto");
+        }
+
+        uploadParams.put("resource_type", "auto");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                uploadParams);
+
+        return uploadResult;
     }
 }

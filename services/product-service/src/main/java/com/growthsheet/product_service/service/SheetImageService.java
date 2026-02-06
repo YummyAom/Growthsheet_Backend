@@ -21,8 +21,8 @@ public class SheetImageService {
             SheetImage img = new SheetImage();
             img.setImageUrl(url);
             img.setSortOrder(order++);
-            img.setSheet(sheet);                 // back-reference สำคัญ
-            sheet.getPreviewImages().add(img);   // cascade จะจัดการ save ให้
+            img.setSheet(sheet);
+            sheet.getPreviewImages().add(img);
         }
     }
 }
