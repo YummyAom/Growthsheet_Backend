@@ -9,4 +9,5 @@ import com.growthsheet.user_service.entity.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
         Optional<User> findByEmail(String email);
+        Optional<User> findByName(String username);
 }

@@ -31,6 +31,22 @@ public class OrderController {
         return "Hello order";
     }
 
+    // @GetMapping("/test")
+    // public ResponseEntity<List<OrderResponse>> getOrders(
+    //         @RequestHeader(value = "X-User-Id", required = false) String userId,
+    //         @RequestHeader(value = "X-User-Role", required = false) String role) {
+
+    //     // Debug ดูว่า Gateway ส่งมาให้จริงไหม
+    //     System.out.println("Order Service Received User ID: " + userId);
+    //     System.out.println("Order Service Received Role: " + role);
+
+    //     if (userId == null) {
+    //         return ResponseEntity.status(401).build();
+    //     }
+
+    //     return ResponseEntity.ok(orderService.getOrdersByUser(UUID.fromString(userId)));
+    // }
+
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(
             @RequestHeader("X-USER-ID") UUID userId,

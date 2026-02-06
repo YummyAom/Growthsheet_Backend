@@ -4,8 +4,13 @@ server:
 spring:
   application:
     name: apigateway-service
-    web-application-type: reactive   # บังคับใช้ WebFlux (Gateway ต้องเป็น reactive)
-
+    web-application-type: reactive # บังคับใช้ WebFlux (Gateway ต้องเป็น reactive)
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD} 
+      connect-timeout: 2000ms
   cloud:
     gateway:
       routes:
@@ -21,7 +26,9 @@ spring:
           predicates:
             - Path=/order/**
           filters:
+            - AuthenticationFilter 
             - PrefixPath=/api
+          
 logging:
   level:
     com.growthsheet.apigateway_service: INFO
