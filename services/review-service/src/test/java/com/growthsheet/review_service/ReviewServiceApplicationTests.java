@@ -1,10 +1,10 @@
-package com.growthsheet.user_service;
+package com.growthsheet.review_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class UserServiceApplicationTests {
+class ReviewServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
