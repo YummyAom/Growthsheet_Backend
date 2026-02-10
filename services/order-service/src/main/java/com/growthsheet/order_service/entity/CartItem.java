@@ -20,7 +20,7 @@ public class CartItem {
 
     @Id
     @GeneratedValue
-    private UUID cartItemId;
+    private UUID id;
 
     private UUID sheetId;
     private String sheetName;

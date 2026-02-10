@@ -46,7 +46,7 @@ public class OrderService {
 
         // === เอาเฉพาะ item ที่เลือก ===
         for (CartItem c : cart.getItems()) {
-            if (req.getCartItemIds().contains(c.getCartItemId())) {
+            if (req.getCartItemIds().contains(c.getId())) {
 
                 OrderItem oi = new OrderItem();
                 oi.setSheetId(c.getSheetId());
@@ -66,7 +66,7 @@ public class OrderService {
         Order savedOrder = orderRepo.save(order);
 
         // === ลบ item ที่จ่ายแล้วออกจาก cart ===
-        cart.getItems().removeIf(i -> req.getCartItemIds().contains(i.getCartItemId()));
+        cart.getItems().removeIf(i -> req.getCartItemIds().contains(i.getId()));
 
         // === คำนวณ total cart ใหม่ ===
         BigDecimal cartTotal = cart.getItems().stream()

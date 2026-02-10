@@ -94,7 +94,7 @@ public class CartService {
 
         List<CartResponse.Item> items = cart.getItems().stream().map(i -> {
             CartResponse.Item it = new CartResponse.Item();
-            it.setCratItmeId(i.getCartItemId());
+            it.setId(i.getId());
             it.setSheetId(i.getSheetId());
             it.setSheetName(i.getSheetName());
             it.setSellerName(i.getSellerName());
@@ -112,7 +112,7 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
 
         CartItem item = cart.getItems().stream()
-                .filter(i -> i.getCartItemId().equals(cartItemId))
+                .filter(i -> i.getId().equals(cartItemId))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
 
