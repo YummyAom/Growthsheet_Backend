@@ -67,7 +67,6 @@ public class AuthController {
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> body) {
 
-        // ตัดคำว่า "Bearer " ออกเพื่อเอาเฉพาะตัว Token UUID
         String accessToken = authHeader.replace("Bearer ", "");
         String refreshToken = body.get("refresh_token");
 

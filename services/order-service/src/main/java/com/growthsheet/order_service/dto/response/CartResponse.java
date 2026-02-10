@@ -19,7 +19,7 @@ public class CartResponse {
     @Getter
     @Setter
     public static class Item {
-        private UUID id;
+        private UUID cratItmeId;
         private UUID sheetId;
         private String sheetName;
         private String sellerName;

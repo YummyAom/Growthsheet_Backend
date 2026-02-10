@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
+import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetService;
@@ -71,7 +72,7 @@ public class SheetController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Map<String, Object>>> getSheets(
+    public ResponseEntity<Page<SheetCardResponse>> getSheets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
@@ -81,7 +82,6 @@ public class SheetController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> getSheetById(
             @PathVariable UUID id) {
-
         return ResponseEntity.ok(sheetService.getSheet(id));
     }
 

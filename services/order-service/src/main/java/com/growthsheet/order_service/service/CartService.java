@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.growthsheet.order_service.config.client.ProductClient;
-import com.growthsheet.order_service.dto.response.AddToCartRequest;
 import com.growthsheet.order_service.dto.response.CartResponse;
 import com.growthsheet.order_service.entity.Cart;
 import com.growthsheet.order_service.entity.CartItem;
@@ -63,7 +62,7 @@ public class CartService {
                     c.setUserId(userId);
                     c.setTotalPrice(BigDecimal.ZERO);
                     c.setItems(new ArrayList<>());
-                    return c; // ต้องมี return ตรงนี้
+                    return c; 
                 });
 
         CartItem item = new CartItem();
@@ -95,7 +94,7 @@ public class CartService {
 
         List<CartResponse.Item> items = cart.getItems().stream().map(i -> {
             CartResponse.Item it = new CartResponse.Item();
-            it.setId(i.getId());
+            it.setCratItmeId(i.getCartItemId());
             it.setSheetId(i.getSheetId());
             it.setSheetName(i.getSheetName());
             it.setSellerName(i.getSellerName());
@@ -113,7 +112,7 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
 
         CartItem item = cart.getItems().stream()
-                .filter(i -> i.getId().equals(cartItemId))
+                .filter(i -> i.getCartItemId().equals(cartItemId))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
 
