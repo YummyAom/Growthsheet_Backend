@@ -19,6 +19,6 @@ import com.growthsheet.product_service.dto.response.SheetReviewResponseDTO;
 //             @PathVariable UUID id,
 //             @RequestParam(defaultValue = "0") int page,
 //             @RequestParam(defaultValue = "5") int size) {
-//                 return 
+//                 return sheetService.getSheets(id, page, size);
 //     }
 // }

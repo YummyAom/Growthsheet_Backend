@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.growthsheet.product_service.dto.UploadedFile;
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetResponse;
@@ -73,7 +71,7 @@ public class SheetController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDTO>> getSheets(
+    public ResponseEntity<Page<Map<String, Object>>> getSheets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 

@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.growthsheet.order_service.config.client.ProductClient;
 import com.growthsheet.order_service.dto.response.AddToCartRequest;
 import com.growthsheet.order_service.dto.response.CartResponse;
+import com.growthsheet.order_service.dto.response.ProductResponse;
 import com.growthsheet.order_service.service.CartService;
 
 @RestController
@@ -21,9 +23,11 @@ import com.growthsheet.order_service.service.CartService;
 public class CartController {
 
     private final CartService cartService;
+    private final ProductClient productClient;
 
-    public CartController(CartService cartService) {
+    public CartController(CartService cartService, ProductClient productClient) {
         this.cartService = cartService;
+        this.productClient = productClient;
     }
 
     @GetMapping
@@ -31,12 +35,20 @@ public class CartController {
         return "Hello cart";
     }
 
+    // @GetMapping("/debug-product/{sheetId}")
+    // public ResponseEntity<ProductResponse> debugProduct(@PathVariable UUID
+    // sheetId) {
+    // // เรียกไปที่ product-service ตรงๆ ผ่าน Feign Client
+    // ProductResponse product = productClient.getSheetById(sheetId);
+    // return ResponseEntity.ok(product);
+    // }
+    
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @RequestHeader("X-USER-ID") UUID userId,
-            @RequestBody AddToCartRequest req) {
+            @RequestBody UUID sheetId) {
 
-        return ResponseEntity.ok(cartService.addToCart(userId, req));
+        return ResponseEntity.ok(cartService.addToCart(userId, sheetId));
     }
 
     @GetMapping("/user")

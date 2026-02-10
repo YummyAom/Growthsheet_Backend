@@ -1,5 +1,6 @@
 package com.growthsheet.product_service.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -70,7 +71,7 @@ public class SheetService {
                 sheet.setDescription(req.description());
                 sheet.setPrice(req.price());
 
-                sheet.setFileUrl( (String) pdf.get("url"));
+                sheet.setFileUrl((String) pdf.get("url"));
                 sheet.setPageCount((Integer) pdf.get("pageCount"));
 
                 sheet.setCourseCode(req.courseCode());
@@ -93,7 +94,7 @@ public class SheetService {
                 return SheetResponse.from(sheet);
         }
 
-        public Page<ProductResponseDTO> getSheets(int page, int size) {
+        public Page<Map<String, Object>> getSheets(int page, int size) {
 
                 Pageable pageable = PageRequest.of(
                                 page,
@@ -107,66 +108,37 @@ public class SheetService {
                                                         .map(u -> new SellerDTO(u.getId(), u.getName()))
                                                         .orElse(null);
 
-                                        return new ProductResponseDTO(
-                                                        sheet.getId(),
-                                                        sheet.getTitle(),
-                                                        sheet.getDescription(),
-                                                        sheet.getPrice(),
+                                        Map<String, Object> map = new HashMap<>();
+                                        map.put("id", sheet.getId());
+                                        map.put("title", sheet.getTitle());
+                                        map.put("description", sheet.getDescription());
+                                        map.put("price", sheet.getPrice());
 
-                                                        // image
-                                                        (sheet.getPreviewImages() == null
-                                                                        || sheet.getPreviewImages().isEmpty())
-                                                                                        ? null
-                                                                                        : sheet.getPreviewImages()
-                                                                                                        .get(0)
-                                                                                                        .getImageUrl(),
-
-                                                        sheet.getFileUrl(),
-
-                                                        // university
-                                                        sheet.getUniversity() == null
+                                        String firstImageUrl = (sheet.getPreviewImages() == null
+                                                        || sheet.getPreviewImages().isEmpty())
                                                                         ? null
-                                                                        : new UniversityDTO(
-                                                                                        sheet.getUniversity().getId(),
-                                                                                        sheet.getUniversity()
-                                                                                                        .getNameEn()),
-
-                                                        // category
-                                                        sheet.getCategory() == null
-                                                                        ? null
-                                                                        : new CategoryDTO(
-                                                                                        sheet.getCategory().getId(),
-                                                                                        sheet.getCategory().getName()),
-
-                                                        // tags
-                                                        sheet.getHashtags()
-                                                                        .stream()
+                                                                        : sheet.getPreviewImages().get(0).getImageUrl();
+                                        map.put("image", firstImageUrl);
+                                        map.put("university", sheet.getUniversity() == null ? null
+                                                        : new UniversityDTO(
+                                                                        sheet.getUniversity().getId(),
+                                                                        sheet.getUniversity().getNameEn()));
+                                        map.put("category", sheet.getCategory() == null ? null
+                                                        : new CategoryDTO(
+                                                                        sheet.getCategory().getId(),
+                                                                        sheet.getCategory().getName()));
+                                        map.put("hashtags",
+                                                        sheet.getHashtags().stream()
                                                                         .map(Hashtag::getName)
-                                                                        .toList(),
-
-                                                        // ratingCount
-                                                        sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
-
-                                                        // ratingAverage
+                                                                        .toList());
+                                        map.put("averageRating",
                                                         sheet.getAverageRating() == null
                                                                         ? 0.0
-                                                                        : sheet.getAverageRating().doubleValue(),
+                                                                        : sheet.getAverageRating().doubleValue());
+                                        map.put("isPublished", sheet.getIsPublished());
+                                        map.put("seller", seller);
 
-                                                        // seller
-                                                        seller,
-
-                                                        // isPublished
-                                                        sheet.getIsPublished(),
-
-                                                        // pageCount
-                                                        sheet.getPageCount(),
-
-                                                        // createdAt
-                                                        sheet.getCreatedAt(),
-
-                                                        // updatedAt
-                                                        sheet.getUpdatedAt());
-
+                                        return map;
                                 });
         }
 

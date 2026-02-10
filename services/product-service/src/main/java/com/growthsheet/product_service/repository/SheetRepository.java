@@ -12,7 +12,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface SheetRepository extends JpaRepository<Sheet, UUID> {
-
-    @EntityGraph(attributePaths = { "seller" })
+    @EntityGraph(attributePaths = {
+            "university",
+            "category",
+            "hashtags",
+            "previewImages"
+    })
+    // @EntityGraph(attributePaths = { "seller" })
     Page<Sheet> findByStatus(SheetStatus status, Pageable pageable);
 }
