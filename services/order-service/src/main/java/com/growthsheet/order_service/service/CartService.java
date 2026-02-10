@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.growthsheet.order_service.config.client.ProductClient;
+import com.growthsheet.order_service.dto.request.AddToCartRequest;
 import com.growthsheet.order_service.dto.response.CartResponse;
 import com.growthsheet.order_service.entity.Cart;
 import com.growthsheet.order_service.entity.CartItem;
@@ -53,8 +54,8 @@ public class CartService {
     // return map(cartRepository.save(cart));
     // }
 
-    public CartResponse addToCart(UUID userId, UUID sheetId) {
-        var product = productClient.getSheetById(sheetId);
+    public CartResponse addToCart(UUID userId, AddToCartRequest sheetId) {
+        var product = productClient.getSheetById(sheetId.getSheetId());
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -62,7 +63,7 @@ public class CartService {
                     c.setUserId(userId);
                     c.setTotalPrice(BigDecimal.ZERO);
                     c.setItems(new ArrayList<>());
-                    return c; 
+                    return c;
                 });
 
         CartItem item = new CartItem();
@@ -106,20 +107,28 @@ public class CartService {
         return res;
     }
 
-    public void removeItem(UUID userId, UUID cartItemId) {
+    @Transactional
+    public void removeItems(UUID userId, List<UUID> cartItemIds) {
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
 
-        CartItem item = cart.getItems().stream()
-                .filter(i -> i.getId().equals(cartItemId))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
+        // หา item ที่ต้องลบจริง ๆ
+        List<CartItem> itemsToRemove = cart.getItems().stream()
+                .filter(item -> cartItemIds.contains(item.getId()))
+                .toList();
 
-        cart.setTotalPrice(
-                cart.getTotalPrice().subtract(item.getPrice()));
+        if (itemsToRemove.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No cart items found to remove");
+        }
 
-        cart.getItems().remove(item);
+        // ปรับราคา
+        itemsToRemove.forEach(item -> cart.setTotalPrice(cart.getTotalPrice().subtract(item.getPrice())));
+
+        // ลบออก
+        cart.getItems().removeAll(itemsToRemove);
 
         cartRepository.save(cart);
     }
