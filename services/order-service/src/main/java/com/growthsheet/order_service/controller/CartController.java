@@ -18,7 +18,6 @@ import com.growthsheet.order_service.config.client.ProductClient;
 import com.growthsheet.order_service.dto.request.AddToCartRequest;
 import com.growthsheet.order_service.dto.request.RemoveCartItemsRequest;
 import com.growthsheet.order_service.dto.response.CartResponse;
-import com.growthsheet.order_service.dto.response.ProductResponse;
 import com.growthsheet.order_service.service.CartService;
 
 @RestController
@@ -26,11 +25,9 @@ import com.growthsheet.order_service.service.CartService;
 public class CartController {
 
     private final CartService cartService;
-    private final ProductClient productClient;
 
     public CartController(CartService cartService, ProductClient productClient) {
         this.cartService = cartService;
-        this.productClient = productClient;
     }
 
     @GetMapping

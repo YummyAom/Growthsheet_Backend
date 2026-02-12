@@ -1,0 +1,29 @@
+server:
+  port: ${PAYMENT_SERVICE_URL}
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: ${JWT_EXP_MS}
+
+user:
+  service:
+    url: ${AUTH_SERVICE_URL} 
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL}
