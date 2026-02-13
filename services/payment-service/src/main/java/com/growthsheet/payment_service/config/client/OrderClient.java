@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.growthsheet.payment_service.dto.OrderResponse;
 
-@FeignClient(name = "order-service", url = "https://growthsheet-backend.onrender.com")
+@FeignClient(name = "order-service", url = "https://growthsheet-backend-payment.onrender.com")
 public interface OrderClient {
 
     @GetMapping("/order/pending")
