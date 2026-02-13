@@ -45,7 +45,7 @@ public class PaymentController {
     @PostMapping("/create-charge")
     public ResponseEntity<?> createCharge(
             @RequestHeader("X-USER-ID") UUID userId,
-            @RequestParam UUID orderId) {
+            @RequestBody UUID orderId) {
 
         try {
 
