@@ -1,8 +1,10 @@
 package com.growthsheet.payment_service.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record PaymentRequest(
-    String source,
-    BigDecimal amount // รับราคาที่ส่งมาจาก Frontend
+    String omiseSourceId,
+    BigDecimal amount,
+    UUID orderId
 ) {}

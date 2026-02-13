@@ -1,5 +1,5 @@
 server:
-  port: ${PAYMENT_SERVICE_URL}
+  port: ${PAYMENT_PORT}
 
 spring:
   application:
@@ -27,3 +27,11 @@ user:
 product:
   service:
     url: ${PRODUCT_SERVICE_URL}
+
+order:
+  service: 
+    url: ${ORDER_SERVICE_URL}
+
+omise:
+  public_key: ${PKEY_OMISE}
+  secret_key: ${SKEY_OMISE}
