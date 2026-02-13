@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
 
-@FeignClient(name = "user-service", url = "https://growthsheet-backend.onrender.com")
+@FeignClient(name = "user-service", url = "${GATEWAY_SERVICE_URL}")
 public interface UserClient {
 
     @GetMapping("/auth/{id}")

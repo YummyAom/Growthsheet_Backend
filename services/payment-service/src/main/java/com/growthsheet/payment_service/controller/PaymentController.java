@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.growthsheet.payment_service.config.client.OrderClient;
+import com.growthsheet.payment_service.dto.ChargeRequest;
 import com.growthsheet.payment_service.dto.OmiseWebhook;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
@@ -20,7 +21,6 @@ import com.growthsheet.payment_service.dto.PromptPayResponse;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.service.PaymentService;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,11 +42,11 @@ public class PaymentController {
     @PostMapping("/create-charge")
     public ResponseEntity<?> createCharge(
             @RequestHeader("X-USER-ID") UUID userId,
-            @RequestBody UUID orderId) {
+            @RequestBody ChargeRequest request) { // เปลี่ยนจาก UUID เป็น ChargeRequest
 
         try {
-
-            PromptPayResponse response = paymentService.createNewPromptPayCharge(orderId, userId);
+            // เวลาใช้ต้องดึงค่าออกมาผ่าน request.orderId()
+            PromptPayResponse response = paymentService.createNewPromptPayCharge(request.orderId(), userId);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
