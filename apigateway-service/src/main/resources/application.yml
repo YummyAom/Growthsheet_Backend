@@ -51,7 +51,7 @@ spring:
             - PrefixPath=/api
         
         - id: paymeny-service
-          uri: ${PAYMENT_SERVICE_UR}
+          uri: ${PAYMENT_SERVICE_URL}
           predicates:
             - Path=/payments/**
           filters:
