@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "product-service", url = "https://growthsheet-backend.onrender.com/products")
 public interface ProductClient {
-    @GetMapping("/api/products/{id}") 
+    @GetMapping("/products/{id}") 
     ProductResponse getSheetById(@PathVariable("id") UUID id);
 }
 

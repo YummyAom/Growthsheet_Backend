@@ -9,7 +9,7 @@ import java.util.UUID;
 @FeignClient(name = "user-service", url = "https://growthsheet-backend.onrender.com/auth")
 public interface UserClient {
 
-    @GetMapping("/api/auth/{id}")
+    @GetMapping("/auth/{id}")
     UserResponse getUserById(@PathVariable("id") UUID id);
 }
 
