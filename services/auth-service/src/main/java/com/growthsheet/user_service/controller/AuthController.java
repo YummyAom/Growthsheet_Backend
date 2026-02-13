@@ -20,7 +20,6 @@ import com.growthsheet.user_service.dto.response.AuthResponse;
 import com.growthsheet.user_service.service.AuthService;
 import com.growthsheet.user_service.service.OtpService;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.validation.Valid;
 import reactor.core.publisher.Mono;
 

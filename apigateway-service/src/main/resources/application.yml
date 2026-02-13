@@ -49,6 +49,14 @@ spring:
           filters:
             - AuthenticationFilter
             - PrefixPath=/api
+        
+        - id: paymeny-service
+          uri: ${PAYMENT_SERVICE_UR}
+          predicates:
+            - Path=/payments/**
+          filters:
+            - AuthenticationFilter
+            - PrefixPath=/api
 
 logging:
   level:
