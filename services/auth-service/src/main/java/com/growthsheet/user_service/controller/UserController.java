@@ -15,7 +15,7 @@ import com.growthsheet.user_service.dto.requests.RegistorSellerRequest;
 import com.growthsheet.user_service.service.UserService;
 
 @RestController
-@RequestMapping("/api/userห")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
 
