@@ -87,6 +87,26 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderResponse> getPendingOrdersByUser(UUID userId) {
+        return orderRepo.findByUserIdAndStatus(userId, "PENDING")
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    public OrderResponse getOrderByIdAndUser(UUID orderId, UUID userId) {
+
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // กัน user ดู order คนอื่น
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        return mapToResponse(order);
+    }
+
     private OrderResponse mapToResponse(Order order) {
 
         List<OrderResponse.Item> items = new ArrayList<>();
@@ -108,6 +128,20 @@ public class OrderService {
         res.setItems(items);
 
         return res;
+    }
+
+     @Transactional
+    public void markAsPaid(UUID orderId) {
+
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() == "PAID") {
+            return; // กัน update ซ้ำ
+        }
+
+        order.setStatus("PAID");
+        orderRepo.save(order);
     }
 
 }

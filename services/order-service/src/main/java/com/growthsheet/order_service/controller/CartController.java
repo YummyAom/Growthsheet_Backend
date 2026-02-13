@@ -35,14 +35,6 @@ public class CartController {
         return "Hello cart";
     }
 
-    // @GetMapping("/debug-product/{sheetId}")
-    // public ResponseEntity<ProductResponse> debugProduct(@PathVariable UUID
-    // sheetId) {
-    // // เรียกไปที่ product-service ตรงๆ ผ่าน Feign Client
-    // ProductResponse product = productClient.getSheetById(sheetId);
-    // return ResponseEntity.ok(product);
-    // }
-
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @RequestHeader("X-USER-ID") UUID userId,

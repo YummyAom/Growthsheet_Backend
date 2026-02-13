@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,22 +33,6 @@ public class OrderController {
         return "Hello order";
     }
 
-    // @GetMapping("/test")
-    // public ResponseEntity<List<OrderResponse>> getOrders(
-    //         @RequestHeader(value = "X-User-Id", required = false) String userId,
-    //         @RequestHeader(value = "X-User-Role", required = false) String role) {
-
-    //     // Debug ดูว่า Gateway ส่งมาให้จริงไหม
-    //     System.out.println("Order Service Received User ID: " + userId);
-    //     System.out.println("Order Service Received Role: " + role);
-
-    //     if (userId == null) {
-    //         return ResponseEntity.status(401).build();
-    //     }
-
-    //     return ResponseEntity.ok(orderService.getOrdersByUser(UUID.fromString(userId)));
-    // }
-
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(
             @RequestHeader("X-USER-ID") UUID userId,
@@ -59,5 +45,30 @@ public class OrderController {
             @RequestHeader("X-USER-ID") UUID userId) {
 
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<OrderResponse>> getPendingOrders(
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        return ResponseEntity.ok(
+                orderService.getPendingOrdersByUser(userId));
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> getOrder(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable("orderId") UUID orderId) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderByIdAndUser(orderId, userId));
+    }
+
+    @PatchMapping("/{orderId}/paid")
+    public ResponseEntity<Void> markOrderAsPaid(
+            @PathVariable UUID orderId) {
+
+        orderService.markAsPaid(orderId);
+        return ResponseEntity.ok().build();
     }
 }
