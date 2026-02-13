@@ -19,6 +19,8 @@ jwt:
   expiration-ms: ${JWT_EXP_MS}
 resend:
   apikey: ${RESEND_API_KEY}
+cloudinary:
+  url: ${CLOUDINARY_URL}
 
 eureka:
   client:
