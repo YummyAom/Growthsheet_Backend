@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 // import com.growthsheet.order_service.dto.response.ProductResponse;
 
-@FeignClient(name = "product-service", url = "${PRODUCT_SERVICE_URL}")
+@FeignClient(name = "product-service", url = "${https://growthsheet-backend.onrender.com/products}")
 public interface ProductClient {
     @GetMapping("/api/products/{id}") 
     ProductResponse getSheetById(@PathVariable("id") UUID id);
