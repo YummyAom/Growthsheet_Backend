@@ -58,7 +58,7 @@ public class UserService {
         sellerDetail.setUniversity(request.university());
         sellerDetail.setStudentId(request.studentId());
         sellerDetail.setPhone(request.phone());
-        sellerDetail.setEmail(request.email());
+        // sellerDetail.setEmail(request.email());
         sellerDetail.setStudentCardImage(studentCardUpload);
         sellerDetail.setSelfieWithCardImage(selfieUpload);
         sellerDetail.setBankName(request.bankName());

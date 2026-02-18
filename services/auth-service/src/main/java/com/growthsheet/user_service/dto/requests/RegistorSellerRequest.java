@@ -20,8 +20,8 @@ public record RegistorSellerRequest(
 
         @NotBlank(message = "กรุณาระบุหมายเลขโทรศัพท์") String phone, // ตรงกับ phone ใน JSON
 
-        @NotBlank(message = "กรุณาระบุอีเมล") @Email(message = "รูปแบบอีเมลไม่ถูกต้อง") String email, // ตรงกับ email ใน
-                                                                                                      // JSON
+        // @NotBlank(message = "กรุณาระบุอีเมล") @Email(message = "รูปแบบอีเมลไม่ถูกต้อง") String email, // ตรงกับ email ใน
+        //                                                                                               // JSON
 
         @NotBlank(message = "กรุณาระบุชื่อธนาคาร") String bankName, // ตรงกับ bankName ใน JSON
 

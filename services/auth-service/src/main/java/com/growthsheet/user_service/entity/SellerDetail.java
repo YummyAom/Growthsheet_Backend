@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class SellerDetail {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "user_id")
     private UUID id;
 
     @OneToOne
@@ -33,8 +33,8 @@ public class SellerDetail {
     @Column(name = "phone_number")
     private String phone;
 
-    @Column(name = "contact_email")
-    private String email;
+    // @Column(name = "contact_email")
+    // private String email;
 
     private String bankName;
     private String bankAccountNumber;
@@ -53,7 +53,8 @@ public class SellerDetail {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.status == null) this.status = "pending";
+        if (this.status == null)
+            this.status = "pending";
     }
 
     @PreUpdate
@@ -63,51 +64,126 @@ public class SellerDetail {
 
     // ===== GETTERS & SETTERS =====
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getNickname() { return nickname; }
-    public void setNickname(String nickname) { this.nickname = nickname; }
+    public User getUser() {
+        return user;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-    public String getUniversity() { return university; }
-    public void setUniversity(String university) { this.university = university; }
+    public String getNickname() {
+        return nickname;
+    }
 
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
 
-    public String getStudentCardImage() { return studentCardImage; }
-    public void setStudentCardImage(String studentCardImage) { this.studentCardImage = studentCardImage; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public String getSelfieWithCardImage() { return selfieWithCardImage; }
-    public void setSelfieWithCardImage(String selfieWithCardImage) { this.selfieWithCardImage = selfieWithCardImage; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getUniversity() {
+        return university;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setUniversity(String university) {
+        this.university = university;
+    }
 
-    public String getBankName() { return bankName; }
-    public void setBankName(String bankName) { this.bankName = bankName; }
+    public String getStudentId() {
+        return studentId;
+    }
 
-    public String getBankAccountNumber() { return bankAccountNumber; }
-    public void setBankAccountNumber(String bankAccountNumber) { this.bankAccountNumber = bankAccountNumber; }
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
+    }
 
-    public String getBankAccountName() { return bankAccountName; }
-    public void setBankAccountName(String bankAccountName) { this.bankAccountName = bankAccountName; }
+    public String getStudentCardImage() {
+        return studentCardImage;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStudentCardImage(String studentCardImage) {
+        this.studentCardImage = studentCardImage;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getSelfieWithCardImage() {
+        return selfieWithCardImage;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setSelfieWithCardImage(String selfieWithCardImage) {
+        this.selfieWithCardImage = selfieWithCardImage;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    // public String getEmail() { return email; }
+    // public void setEmail(String email) { this.email = email; }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
