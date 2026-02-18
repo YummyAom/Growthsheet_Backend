@@ -39,29 +39,29 @@ public class PaymentController {
         return "hello payment";
     }
 
-    @PostMapping("/create-charge")
-    public ResponseEntity<?> createCharge(
-            @RequestHeader("X-USER-ID") UUID userId,
-            @RequestBody ChargeRequest request) { // เปลี่ยนจาก UUID เป็น ChargeRequest
+    // @PostMapping("/create-charge")
+    // public ResponseEntity<?> createCharge(
+    //         @RequestHeader("X-USER-ID") UUID userId,
+    //         @RequestBody ChargeRequest request) { // เปลี่ยนจาก UUID เป็น ChargeRequest
 
-        try {
-            // เวลาใช้ต้องดึงค่าออกมาผ่าน request.orderId()
-            PromptPayResponse response = paymentService.createNewPromptPayCharge(request.orderId(), userId);
+    //     try {
+    //         // เวลาใช้ต้องดึงค่าออกมาผ่าน request.orderId()
+    //         PromptPayResponse response = paymentService.createNewPromptPayCharge(request.orderId(), userId);
 
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "charge_id", response.chargeId(),
-                    "qr_url", response.qrCodeUrl(),
-                    "expires_at", response.expiresAt(),
-                    "amount", response.amount()));
+    //         return ResponseEntity.ok(Map.of(
+    //                 "success", true,
+    //                 "charge_id", response.chargeId(),
+    //                 "qr_url", response.qrCodeUrl(),
+    //                 "expires_at", response.expiresAt(),
+    //                 "amount", response.amount()));
 
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "message", e.getMessage()));
-        }
-    }
+    //     } catch (Exception e) {
+    //         return ResponseEntity.internalServerError()
+    //                 .body(Map.of(
+    //                         "success", false,
+    //                         "message", e.getMessage()));
+    //     }
+    // }
 
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<?> getOrderFromOrderService(

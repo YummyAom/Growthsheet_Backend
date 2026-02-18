@@ -2,6 +2,7 @@ package com.growthsheet.payment_service.service;
 
 import co.omise.Client;
 import co.omise.models.Charge;
+import co.omise.models.Source;
 import co.omise.requests.Request;
 
 import java.math.BigDecimal;
@@ -22,142 +23,153 @@ import com.growthsheet.payment_service.repository.PaymentRepository;
 
 @Service
 public class PaymentService {
-        private final Client omiseClient;
-        private final PaymentRepository paymentRepository;
-        private final OrderClient orderClient;
 
-        public PaymentService(
-                        OrderClient orderClient,
-                        PaymentRepository paymentRepository,
-                        @Value("${omise.public_key}") String publicKey,
-                        @Value("${omise.secret_key}") String secretKey) throws Exception {
+    private final Client omiseClient;
+    private final PaymentRepository paymentRepository;
+    private final OrderClient orderClient;
 
-                this.paymentRepository = paymentRepository;
-                this.orderClient = orderClient;
-                this.omiseClient = new Client.Builder()
-                                .publicKey(publicKey)
-                                .secretKey(secretKey)
-                                .build();
+    public PaymentService(
+            OrderClient orderClient,
+            PaymentRepository paymentRepository,
+            @Value("${omise.public_key}") String publicKey,
+            @Value("${omise.secret_key}") String secretKey) throws Exception {
+
+        this.paymentRepository = paymentRepository;
+        this.orderClient = orderClient;
+
+        this.omiseClient = new Client.Builder()
+                .publicKey(publicKey)
+                .secretKey(secretKey)
+                .build();
+    }
+
+//     @Transactional
+//     public PromptPayResponse createNewPromptPayCharge(UUID orderId, UUID userId) throws Exception {
+//         // ตรวจสอบว่า order มีอยู่จริงผ่าน Feign Client
+//         // ถ้าตรงนี้พ่น 404 ให้เช็คว่าฝั่ง Order Service เปิด Path /order/{id} ไว้จริงไหม
+//         var order = orderClient.getOrderById(userId, orderId);
+//         if (order == null) {
+//             throw new RuntimeException("Order not found from Order Service");
+//         }
+
+//         BigDecimal amountBaht = order.getTotalPrice();
+//         long amountInSatang = amountBaht.multiply(BigDecimal.valueOf(100)).longValue();
+
+//         // ✅ STEP 1: สร้าง PromptPay Source
+//         Request<Source> sourceRequest =
+//                 new Source.CreateRequestBuilder()
+//                         .amount(amountInSatang)
+//                         .currency("thb")
+//                         .type("promptpay")
+//                         .build();
+
+//         Source source = omiseClient.sendRequest(sourceRequest);
+
+//         // ✅ STEP 2: เอา source.id ไปสร้าง Charge
+//         Request<Charge> chargeRequest =
+//                 new Charge.CreateRequestBuilder()
+//                         .amount(amountInSatang)
+//                         .currency("thb")
+//                         .source(source.getId())
+//                         .build();
+
+//         Charge charge = omiseClient.sendRequest(chargeRequest);
+
+//         // ✅ STEP 3: Save DB
+//         Payment payment = Payment.builder()
+//                 .id(UUID.randomUUID())
+//                 .orderId(orderId)
+//                 .chargeId(charge.getId())
+//                 .amount(amountInSatang)
+//                 .status(PaymentStatus.PENDING)
+//                 .build();
+
+//         paymentRepository.save(payment);
+
+//         // ✅ STEP 4: ดึง QR Code URL
+//         // ระวัง: ต้องเช็ค ScannableCode ว่ามีค่าไหมป้องกัน Null
+//         String qrCodeUrl = "";
+//         if (source.getScannableCode() != null && source.getScannableCode().getImage() != null) {
+//             qrCodeUrl = source.getScannableCode().getImage().getDownloadUri();
+//         }
+
+//         // แก้ไขจุดที่พิมพ์ผิด: .getExpiresAt ต้องมี ()
+//         LocalDateTime expiresAt = LocalDateTime.ofInstant(
+//                 java.time.Instant.ofEpochMilli(source.getExpiresAt().getMillis()),
+//                 ZoneId.systemDefault());
+
+//         return new PromptPayResponse(
+//                 charge.getId(),
+//                 qrCodeUrl,
+//                 expiresAt,
+//                 amountBaht);
+//     }
+
+//     @Transactional
+//     public PromptPayResponse getOrRefreshPromptPay(UUID orderId, UUID userId) throws Exception {
+//         Optional<Payment> existing =
+//                 paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING);
+
+//         if (existing.isPresent()) {
+//             Charge charge = omiseClient.sendRequest(
+//                     new Charge.GetRequestBuilder(existing.get().getChargeId()).build());
+
+//             // ตรวจสอบสถานะถ้ายังไม่จ่ายและไม่หมดอายุให้คืนค่าเดิม
+//             if (!charge.isExpired() && !charge.isPaid()) {
+//                 Source source = charge.getSource();
+                
+//                 String qrCodeUrl = (source.getScannableCode() != null) 
+//                         ? source.getScannableCode().getImage().getDownloadUri() 
+//                         : "";
+
+//                 LocalDateTime expiresAt = LocalDateTime.ofInstant(
+//                         java.time.Instant.ofEpochMilli(source.getAmount().getMillis()),
+//                         ZoneId.systemDefault());
+
+//                 BigDecimal amountBaht = BigDecimal.valueOf(charge.getAmount())
+//                         .divide(BigDecimal.valueOf(100));
+
+//                 return new PromptPayResponse(
+//                         charge.getId(),
+//                         qrCodeUrl,
+//                         expiresAt,
+//                         amountBaht);
+//             }
+
+//             // ถ้าสถานะเปลี่ยนไปแล้วให้ Update DB
+//             if (charge.isPaid()) {
+//                 existing.get().setStatus(PaymentStatus.PAID);
+//                 paymentRepository.save(existing.get());
+//             } else if (charge.isExpired()) {
+//                 existing.get().setStatus(PaymentStatus.PENDING);
+//                 paymentRepository.save(existing.get());
+//             }
+//         }
+
+//         // ถ้าไม่มีของเดิม หรือของเดิมใช้ไม่ได้แล้ว ให้สร้างใหม่
+//         return createNewPromptPayCharge(orderId, userId);
+//     }
+
+    @Transactional
+    public void processSuccessfulCharge(String chargeId) throws Exception {
+        Charge charge = omiseClient.sendRequest(
+                new Charge.GetRequestBuilder(chargeId).build());
+
+        if (!charge.isPaid()) {
+            return;
         }
 
-        @Transactional
-        public PromptPayResponse createNewPromptPayCharge(UUID orderId, UUID userId) throws Exception {
-                // 1. ดึง order เพื่อเอาราคาที่ถูกต้อง
-                var order = orderClient.getOrderById(userId, orderId);
+        Payment payment = paymentRepository.findByChargeId(chargeId)
+                .orElseThrow(() -> new RuntimeException("Payment record not found in database for charge: " + chargeId));
 
-                BigDecimal amountBaht = order.getTotalPrice();
-                long amountInSatang = amountBaht
-                                .multiply(BigDecimal.valueOf(100))
-                                .longValue();
-
-                // 2. สร้าง Charge
-                Request<Charge> chargeRequest = new Charge.CreateRequestBuilder()
-                                .amount(amountInSatang)
-                                .currency("thb")
-                                .source("promptpay")
-                                .build();
-
-                Charge charge = omiseClient.sendRequest(chargeRequest);
-
-                // 3. บันทึกข้อมูลการชำระเงินลง Database
-                Payment payment = Payment.builder()
-                                .id(UUID.randomUUID())
-                                .orderId(orderId)
-                                .chargeId(charge.getId())
-                                .amount(amountInSatang)
-                                .status(PaymentStatus.PENDING)
-                                .build();
-
-                paymentRepository.save(payment);
-
-                // 4. ดึง URL ของ QR Code
-                String qrCodeUrl = charge.getSource()
-                                .getScannableCode()
-                                .getImage()
-                                .getDownloadUri();
-
-                // 5. แก้ไขการแปลงเวลา (Joda-Time -> Java Time)
-                LocalDateTime expiresAt = LocalDateTime.ofInstant(
-                                java.time.Instant.ofEpochMilli(charge.getExpiresAt().getMillis()),
-                                ZoneId.systemDefault());
-
-                return new PromptPayResponse(
-                                charge.getId(),
-                                qrCodeUrl,
-                                expiresAt,
-                                amountBaht);
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            return;
         }
 
-        @Transactional
-        public PromptPayResponse getOrRefreshPromptPay(UUID orderId, UUID userId) throws Exception {
+        payment.setStatus(PaymentStatus.PAID);
+        paymentRepository.save(payment);
 
-                // 1. หา Payment ที่ยัง PENDING อยู่
-                Optional<Payment> existing = paymentRepository
-                                .findByOrderIdAndStatus(orderId, PaymentStatus.PENDING);
-
-                if (existing.isPresent()) {
-
-                        // 2. ดึงข้อมูล Charge ล่าสุดจาก Omise
-                        Charge charge = omiseClient.sendRequest(
-                                        new Charge.GetRequestBuilder(existing.get().getChargeId()).build());
-
-                        // 3. ถ้ายังไม่หมดอายุ และยังไม่จ่าย
-                        if (!charge.isExpired() && !charge.isPaid()) {
-
-                                String qrCodeUrl = charge.getSource()
-                                                .getScannableCode()
-                                                .getImage()
-                                                .getDownloadUri();
-
-                                LocalDateTime expiresAt = LocalDateTime.ofInstant(
-                                                java.time.Instant.ofEpochMilli(charge.getExpiresAt().getMillis()),
-                                                ZoneId.systemDefault());
-
-                                BigDecimal amountBaht = BigDecimal
-                                                .valueOf(charge.getAmount())
-                                                .divide(BigDecimal.valueOf(100));
-
-                                return new PromptPayResponse(
-                                                charge.getId(),
-                                                qrCodeUrl,
-                                                expiresAt,
-                                                amountBaht);
-                        }
-
-                        // ถ้า expired หรือ paid แล้ว → เปลี่ยนสถานะใน DB
-                        if (charge.isPaid()) {
-                                existing.get().setStatus(PaymentStatus.PAID);
-                                paymentRepository.save(existing.get());
-                        } else if (charge.isExpired()) {
-                                existing.get().setStatus(PaymentStatus.PAID);
-                                paymentRepository.save(existing.get());
-                        }
-                }
-
-                // 4. ถ้าไม่มี PENDING หรือหมดอายุ → สร้างใหม่
-                return createNewPromptPayCharge(orderId, userId);
-        }
-
-        @Transactional
-        public void processSuccessfulCharge(String chargeId) throws Exception {
-
-                Charge charge = omiseClient.sendRequest(
-                                new Charge.GetRequestBuilder(chargeId).build());
-
-                if (!charge.isPaid()) {
-                        return;
-                }
-
-                Payment payment = paymentRepository.findByChargeId(chargeId)
-                                .orElseThrow(() -> new RuntimeException("Payment not found"));
-
-                if (payment.getStatus() == PaymentStatus.PAID) {
-                        return;
-                }
-
-                payment.setStatus(PaymentStatus.PAID);
-                paymentRepository.save(payment);
-
-                orderClient.markOrderAsPaid(payment.getOrderId());
-        }
+        // แจ้งฝั่ง Order ว่าจ่ายเงินแล้ว
+        orderClient.markOrderAsPaid(payment.getOrderId());
+    }
 }
