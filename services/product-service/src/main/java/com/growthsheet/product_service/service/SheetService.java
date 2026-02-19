@@ -104,53 +104,6 @@ public class SheetService {
                 return SheetResponse.from(sheet);
         }
 
-        // public Page<Map<String, Object>> getSheets(int page, int size) {
-
-        // Pageable pageable = PageRequest.of(
-        // page,
-        // size,
-        // Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        // return sheetRepo.findByStatus(SheetStatus.APPROVED, pageable)
-        // .map(sheet -> {
-
-        // SellerDTO seller = userRepo.findById(sheet.getSellerId())
-        // .map(u -> new SellerDTO(u.getId(), u.getName()))
-        // .orElse(null);
-
-        // Map<String, Object> map = new HashMap<>();
-        // map.put("id", sheet.getId());
-        // map.put("title", sheet.getTitle());
-        // map.put("description", sheet.getDescription());
-        // map.put("price", sheet.getPrice());
-
-        // String firstImageUrl = (sheet.getPreviewImages() == null
-        // || sheet.getPreviewImages().isEmpty())
-        // ? null
-        // : sheet.getPreviewImages().get(0).getImageUrl();
-        // map.put("image", firstImageUrl);
-        // map.put("university", sheet.getUniversity() == null ? null
-        // : new UniversityDTO(
-        // sheet.getUniversity().getId(),
-        // sheet.getUniversity().getNameEn()));
-        // map.put("category", sheet.getCategory() == null ? null
-        // : new CategoryDTO(
-        // sheet.getCategory().getId(),
-        // sheet.getCategory().getName()));
-        // map.put("hashtags",
-        // sheet.getHashtags().stream()
-        // .map(Hashtag::getName)
-        // .toList());
-        // map.put("averageRating",
-        // sheet.getAverageRating() == null
-        // ? 0.0
-        // : sheet.getAverageRating().doubleValue());
-        // map.put("isPublished", sheet.getIsPublished());
-        // map.put("seller", seller);
-
-        // return map;
-        // });
-        // }
         public Page<SheetCardResponse> getSheets(int page, int size) {
 
                 Pageable pageable = PageRequest.of(
@@ -170,6 +123,31 @@ public class SheetService {
                                                 "Sheet not found"));
 
                 return sheetAssembler.assemble(sheet);
+        }
+
+        public Page<SheetCardResponse> findSheetPageByUserId(
+                        UUID sellerId,
+                        int page,
+                        int size,
+                        Boolean isPublished) {
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+                Page<Sheet> sheets;
+
+                if (isPublished == null) {
+                        // ทั้งหมด
+                        sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
+                } else {
+                        // กรองตามสถานะ
+                        sheets = sheetRepo.findAllBySellerIdAndIsPublished(
+                                        sellerId, isPublished, pageable);
+                }
+
+                return sheets.map(sheetAssembler::assemble);
         }
 
         public ProductResponseDTO getSheet(UUID sheetId) {

@@ -34,14 +34,16 @@ public class SheetCardMapper {
     }
 
     private String extractFirstImage(Sheet sheet) {
-        if (sheet.getPreviewImages() == null || sheet.getPreviewImages().isEmpty())
+        if (sheet.getPreviewImages() == null || sheet.getPreviewImages().isEmpty()) {
             return null;
-
+        }
         return sheet.getPreviewImages().get(0).getImageUrl();
     }
 
     private UniversityDTO mapUniversity(Sheet sheet) {
-        if (sheet.getUniversity() == null) return null;
+        if (sheet.getUniversity() == null) {
+            return null;
+        }
 
         return new UniversityDTO(
                 sheet.getUniversity().getId(),
@@ -50,7 +52,9 @@ public class SheetCardMapper {
     }
 
     private CategoryDTO mapCategory(Sheet sheet) {
-        if (sheet.getCategory() == null) return null;
+        if (sheet.getCategory() == null) {
+            return null;
+        }
 
         return new CategoryDTO(
                 sheet.getCategory().getId(),
@@ -59,6 +63,10 @@ public class SheetCardMapper {
     }
 
     private List<String> mapHashtags(Sheet sheet) {
+        if (sheet.getHashtags() == null || sheet.getHashtags().isEmpty()) {
+            return List.of();
+        }
+
         return sheet.getHashtags()
                 .stream()
                 .map(Hashtag::getName)
@@ -66,8 +74,9 @@ public class SheetCardMapper {
     }
 
     private Double extractRating(Sheet sheet) {
-        return sheet.getAverageRating() == null
-                ? 0.0
-                : sheet.getAverageRating().doubleValue();
+        if (sheet.getAverageRating() == null) {
+            return 0.0;
+        }
+        return sheet.getAverageRating().doubleValue();
     }
 }
