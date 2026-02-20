@@ -14,13 +14,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface SheetRepository extends JpaRepository<Sheet, UUID> {
+
         @EntityGraph(attributePaths = {
                         "university",
                         "category",
                         "hashtags",
                         "previewImages"
         })
-        // @EntityGraph(attributePaths = { "seller" })
+        Page<Sheet> findByIsPublishedTrue(Pageable pageable);
+
+        @EntityGraph(attributePaths = {
+                        "university",
+                        "category",
+                        "hashtags",
+                        "previewImages"
+        })
         Page<Sheet> findByStatus(SheetStatus status, Pageable pageable);
 
         Page<Sheet> findAllBySellerId(UUID sellerId, Pageable pageable);
@@ -37,5 +45,13 @@ public interface SheetRepository extends JpaRepository<Sheet, UUID> {
                             WHERE sl.userId = :userId
                         """)
         Page<Sheet> findLikedSheets(@Param("userId") UUID userId, Pageable pageable);
+
+        @EntityGraph(attributePaths = {
+                        "university",
+                        "category",
+                        "hashtags",
+                        "previewImages"
+        })
+        Page<Sheet> findByStatusAndIsPublishedTrue(SheetStatus status, Pageable pageable);
 
 }

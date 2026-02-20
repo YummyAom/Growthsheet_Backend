@@ -26,6 +26,7 @@ import com.growthsheet.product_service.entity.Hashtag;
 import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.entity.SheetReview;
 import com.growthsheet.product_service.entity.SheetStatus;
+import com.growthsheet.product_service.mapper.SheetCardMapper;
 import com.growthsheet.product_service.repository.CategoryRepository;
 import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
@@ -44,6 +45,7 @@ public class SheetService {
         private final UserRepository userRepo;
         private final ReviewRepository reviewRepo;
         private final SheetAssembler sheetAssembler;
+        private final SheetCardMapper sheetCardMapper;
 
         public SheetService(
                         SheetRepository sheetRepo,
@@ -53,7 +55,8 @@ public class SheetService {
                         UniversityService universityService,
                         UserRepository userRepo,
                         ReviewRepository reviewRepo,
-                        SheetAssembler sheetAssembler) {
+                        SheetAssembler sheetAssembler,
+                        SheetCardMapper sheetCardMapper) {
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -62,6 +65,7 @@ public class SheetService {
                 this.userRepo = userRepo;
                 this.reviewRepo = reviewRepo;
                 this.sheetAssembler = sheetAssembler;
+                this.sheetCardMapper = sheetCardMapper;
         }
 
         @Transactional
@@ -104,15 +108,33 @@ public class SheetService {
                 return SheetResponse.from(sheet);
         }
 
-        public Page<SheetCardResponse> getSheets(int page, int size) {
+        private Sort getSort(String sort) {
+                return switch (sort) {
+                        case "price_asc" -> Sort.by("price").ascending();
+                        case "price_desc" -> Sort.by("price").descending();
+                        case "rating" -> Sort.by("averageRating").descending();
+                        case "popular" -> Sort.by("likeCount").descending();
+                        case "latest" -> Sort.by("createdAt").descending();
+                        default -> Sort.by("createdAt").descending();
+                };
+        }
 
-                Pageable pageable = PageRequest.of(
-                                page,
-                                size,
-                                Sort.by(Sort.Direction.DESC, "createdAt"));
+        private SheetCardResponse toSheetCardResponse(Sheet sheet) {
 
-                return sheetRepo.findByStatus(SheetStatus.APPROVED, pageable)
-                                .map(sheetAssembler::assemble);
+                SellerDTO seller = userRepo.findById(sheet.getSellerId())
+                                .map(u -> new SellerDTO(u.getId(), u.getName()))
+                                .orElse(null);
+
+                return sheetCardMapper.toResponse(sheet, seller);
+        }
+
+        public Page<SheetCardResponse> getSheets(int page, int size, String sort) {
+
+                Pageable pageable = PageRequest.of(page, size, getSort(sort));
+
+                Page<Sheet> sheets = sheetRepo.findByIsPublishedTrue(pageable);
+
+                return sheets.map(this::toSheetCardResponse);
         }
 
         public SheetCardResponse getSheetById(UUID sheetId) {

@@ -72,12 +72,22 @@ public class SheetController {
         return ResponseEntity.ok(fileService.uploadFile(file));
     }
 
+    // @GetMapping
+    // public ResponseEntity<Page<SheetCardResponse>> getSheets(
+    // @RequestParam(defaultValue = "0") int page,
+    // @RequestParam(defaultValue = "10") int size) {
+
+    // return ResponseEntity.ok(sheetService.getSheets(page, size));
+    // }
+
     @GetMapping
     public ResponseEntity<Page<SheetCardResponse>> getSheets(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "latest") String sort) {
 
-        return ResponseEntity.ok(sheetService.getSheets(page, size));
+        return ResponseEntity.ok(
+                sheetService.getSheets(page, size, sort));
     }
 
     @GetMapping("/{sheetId}")
