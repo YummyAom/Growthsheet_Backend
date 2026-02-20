@@ -84,10 +84,12 @@ public class SheetController {
     public ResponseEntity<Page<SheetCardResponse>> getSheets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "latest") String sort) {
+            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(required = false) Boolean isPublished // null = ทั้งหมด
+    ) {
 
         return ResponseEntity.ok(
-                sheetService.getSheets(page, size, sort));
+                sheetService.getSheets(page, size, sort, isPublished));
     }
 
     @GetMapping("/{sheetId}")

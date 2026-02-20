@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: payment-service
+    name: admin-service
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}

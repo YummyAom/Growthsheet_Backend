@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.growthsheet.payment_service.config.client.OrderClient;
-import com.growthsheet.payment_service.dto.ChargeRequest;
 import com.growthsheet.payment_service.dto.OmiseWebhook;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
-import com.growthsheet.payment_service.dto.PromptPayResponse;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.service.PaymentService;

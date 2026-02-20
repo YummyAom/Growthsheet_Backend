@@ -9,7 +9,7 @@ import java.util.UUID;
 @FeignClient(name = "user-service", url = "${GATEWAY_SERVICE_URL}")
 public interface UserClient {
 
-    @GetMapping("/auth/{id}")
+    @GetMapping("/users/{id}")
     UserResponse getUserById(@PathVariable("id") UUID id);
 }
 

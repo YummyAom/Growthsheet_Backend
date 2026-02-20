@@ -1,13 +1,11 @@
 package com.growthsheet.product_service.service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -128,11 +126,29 @@ public class SheetService {
                 return sheetCardMapper.toResponse(sheet, seller);
         }
 
-        public Page<SheetCardResponse> getSheets(int page, int size, String sort) {
-
+        public Page<SheetCardResponse> getSheets(
+                        int page,
+                        int size,
+                        String sort,
+                        Boolean isPublished // null = ทั้งหมด
+        ) {
                 Pageable pageable = PageRequest.of(page, size, getSort(sort));
 
-                Page<Sheet> sheets = sheetRepo.findByIsPublishedTrue(pageable);
+                Page<Sheet> sheets;
+
+                if (isPublished == null) {
+                        // ทั้งหมด
+                        sheets = sheetRepo.findByStatus(
+                                        SheetStatus.APPROVED,
+                                        pageable);
+                } else {
+                        // true = public
+                        // false = private
+                        sheets = sheetRepo.findByStatusAndIsPublished(
+                                        SheetStatus.APPROVED,
+                                        isPublished,
+                                        pageable);
+                }
 
                 return sheets.map(this::toSheetCardResponse);
         }

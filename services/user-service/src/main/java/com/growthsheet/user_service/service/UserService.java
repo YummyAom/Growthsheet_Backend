@@ -64,7 +64,7 @@ public class UserService {
         sellerDetail.setBankName(request.bankName());
         sellerDetail.setBankAccountNumber(request.bankAccountNumber());
         sellerDetail.setBankAccountName(request.bankAccountName());
-        sellerDetail.setStatus("pending");
+        sellerDetail.setStatus("PENDING");
 
         sellerDetailRepository.save(sellerDetail);
 

@@ -43,8 +43,13 @@ public class UserController {
                 selfieWithCardImage);
     }
 
+
+
     @PostMapping("/approve-seller/{userId}")
     public String approveSeller(@PathVariable UUID userId) {
         return userService.approveSeller(userId);
     }
+
+    // @GetMapping("/sellers")
+    // public 
 }
