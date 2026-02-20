@@ -35,8 +35,8 @@ public class SellerAdminController {
         return sellerAdminService.getSellerApplications(status.toUpperCase(), pageable);
     }
 
-    @GetMapping("/admin/seller-applications/{id}")
-    public SellerApplication getById(@PathVariable UUID id) {
-        return service.getById(id);
-    }
+    // @GetMapping("/admin/seller-applications/{id}")
+    // public SellerApplication getById(@PathVariable UUID id) {
+    //     return service.getById(id);
+    // }
 }
