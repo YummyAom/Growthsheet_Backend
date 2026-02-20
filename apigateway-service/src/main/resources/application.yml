@@ -66,6 +66,14 @@ spring:
             - AuthenticationFilter
             - PrefixPath=/api
 
+        - id: file-service
+          uri: ${FILE_SERVICE_URL}
+          predicates:
+            - Path=/file/**
+          filters:
+            - AuthenticationFilter
+            - PrefixPath=/api
+
 logging:
   level:
     com.growthsheet.apigateway_service: INFO

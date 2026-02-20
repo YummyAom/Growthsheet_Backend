@@ -1,88 +1,50 @@
 package com.growthsheet.user_service.entity;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private boolean enabled = true;
-
-    @Column(name = "user_photo_url", nullable = true)
-    private String userPhotoUrl;
+    private Boolean enabled;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private UserRole role;
 
-    // ===== getters & setters =====
-    public String getUserPhotoUrl() {
-        return userPhotoUrl;
-    }
-    public void setUserPhotoUrl(String userPhotoUrl) {
-        this.userPhotoUrl = userPhotoUrl;
-    }
-    public UUID getId() {
-        return id;
-    }
+    @Column(name = "user_photo_url")
+    private String userPhotoUrl;
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    @Column(name = "student_year")
+    private Integer studentYear;
 
-    public String getName() {
-        return name;
-    }
+    private String faculty;
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "university_id")
+    private University university;
 
-    public String getEmail() {
-        return email;
-    }
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
+    // Getter / Setter
 }

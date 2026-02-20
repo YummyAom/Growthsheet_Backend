@@ -6,10 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.growthsheet.admin_service.dto.SellerApplicationDetailDTO;
 import com.growthsheet.admin_service.dto.SellerApplicationSummaryDTO;
 import com.growthsheet.admin_service.service.SellerAdminService;
 
@@ -27,7 +30,7 @@ public class SellerAdminController {
         return "hello";
     }
 
-    // /admin/sellers?status=PENDING&page=0&size=10
+    // /admin/seller-applications?status=PENDING&page=0&size=10
     @GetMapping("/seller-applications")
     public Page<SellerApplicationSummaryDTO> getSellerApplications(
             @RequestParam(defaultValue = "PENDING") String status,
@@ -35,8 +38,24 @@ public class SellerAdminController {
         return sellerAdminService.getSellerApplications(status.toUpperCase(), pageable);
     }
 
-    @GetMapping("/admin/seller-applications/{id}")
-    public SellerApplication getById(@PathVariable UUID id) {
-        return service.getById(id);
+    @GetMapping("/seller-applications/{userId}")
+    public SellerApplicationDetailDTO getSellerApplicationDetail(
+            @PathVariable UUID userId) {
+
+        return sellerAdminService.getSellerDetail(userId);
+    }
+
+    @PutMapping("/seller-applications/{userId}/review")
+    public SellerApplicationDetailDTO reviewSeller(
+            @PathVariable UUID userId,
+            @RequestParam String status, // APPROVED / REJECTED
+            @RequestParam(required = false) String comment,
+            @RequestHeader("admin-id") UUID adminId) {
+
+        return sellerAdminService.reviewSeller(
+                userId,
+                status,
+                comment,
+                adminId);
     }
 }
