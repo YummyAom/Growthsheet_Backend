@@ -13,63 +13,62 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "seller_details")
+@Getter
+@Setter
 public class SellerDetails {
 
     @Id
     @Column(name = "user_id")
-    private UUID user_id;
+    private UUID userId;
 
     @Column(name = "pen_name")
-    private String pen_name;
+    private String penName;
 
     @Column(name = "full_name")
-    private String full_name;
+    private String fullName;
 
     @Column(name = "university")
     private String university;
 
     @Column(name = "student_id")
-    private String student_id;
+    private String studentId;
 
     @Column(name = "id_card_url")
-    private String id_card_url;
+    private String idCardUrl;
 
     @Column(name = "selfie_id_url")
-    private String selfie_id_url;
+    private String selfieIdUrl;
 
     @Column(name = "phone_number")
-    private String phone_number;
+    private String phoneNumber;
 
     @Column(name = "bank_name")
-    private String bank_name;
+    private String bankName;
 
     @Column(name = "bank_account_number")
-    private String bank_account_number;
+    private String bankAccountNumber;
 
     @Column(name = "bank_account_name")
-    private String bank_account_name;
+    private String bankAccountName;
 
-    // PENDING / APPROVED / REJECTED
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private SellerStatus is_verified;
+    private SellerStatus isVerified;
 
     @Column(name = "admin_comment")
-    private String admin_comment;
+    private String adminComment;
 
     @Column(name = "reviewed_by")
-    private UUID reviewed_by;
+    private UUID reviewedBy;
 
     @Column(name = "reviewed_at")
-    private LocalDateTime reviewed_at;
+    private LocalDateTime reviewedAt;
 
     @Column(name = "created_at")
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 }

@@ -11,29 +11,33 @@ public class SellerApplicationMapper {
     public SellerApplicationDetailDTO toDetailDTO(SellerDetails entity) {
         SellerApplicationDetailDTO dto = new SellerApplicationDetailDTO();
 
-        dto.setUser_id(entity.getUser_id());
-        dto.setPen_name(entity.getPen_name());
-        dto.setFull_name(entity.getFull_name());
+        dto.setUser_id(entity.getUserId());
+        dto.setPen_name(entity.getPenName());
+        dto.setFull_name(entity.getFullName());
         dto.setUniversity(entity.getUniversity());
-        dto.setStudent_id(entity.getStudent_id());
+        dto.setStudent_id(entity.getStudentId());
 
-        dto.setId_card_url(entity.getId_card_url());
-        dto.setSelfie_id_url(entity.getId_card_url());
+        dto.setId_card_url(entity.getIdCardUrl());
+        dto.setSelfie_id_url(entity.getSelfieIdUrl());
 
-        dto.setPhone_number(entity.getPhone_number());
+        dto.setPhone_number(entity.getPhoneNumber());
 
-        dto.setBank_name(entity.getBank_name());
-        dto.setBank_account_number(entity.getBank_account_number());
-        dto.setBank_account_name(entity.getBank_account_name());
+        dto.setBank_name(entity.getBankName());
+        dto.setBank_account_number(entity.getBankAccountNumber());
+        dto.setBank_account_name(entity.getBankAccountName());
 
-        dto.setIs_verified(entity.getIs_verified().name());
-        dto.setAdmin_comment(entity.getAdmin_comment());
+        // Enum → String
+        if (entity.getIsVerified() != null) {
+            dto.setIs_verified(entity.getIsVerified().name());
+        }
 
-        dto.setReviewed_by(entity.getReviewed_by());
-        dto.setReviewed_at(entity.getReviewed_at());
+        dto.setAdmin_comment(entity.getAdminComment());
 
-        dto.setCreated_at(entity.getCreated_at());
-        dto.setUpdated_at(entity.getUpdated_at());
+        dto.setReviewed_by(entity.getReviewedBy());
+        dto.setReviewed_at(entity.getReviewedAt());
+
+        dto.setCreated_at(entity.getCreatedAt());
+        dto.setUpdated_at(entity.getUpdatedAt());
 
         return dto;
     }

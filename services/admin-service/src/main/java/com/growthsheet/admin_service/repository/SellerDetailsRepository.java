@@ -12,16 +12,15 @@ import com.growthsheet.admin_service.entity.SellerDetails;
 
 public interface SellerDetailsRepository extends JpaRepository<SellerDetails, UUID> {
 
-    @Query(value = """
-            SELECT * FROM seller_details
-            WHERE is_verified = :status
-            ORDER BY created_at DESC
-            """, countQuery = """
-            SELECT count(*) FROM seller_details
-            WHERE is_verified = :status
-            """, nativeQuery = true)
-    Page<SellerDetails> findByStatus(String status, Pageable pageable);
+        @Query(value = """
+                        SELECT * FROM seller_details
+                        WHERE is_verified = :status
+                        ORDER BY created_at DESC
+                        """, countQuery = """
+                        SELECT count(*) FROM seller_details
+                        WHERE is_verified = :status
+                        """, nativeQuery = true)
+        Page<SellerDetails> findByStatus(String status, Pageable pageable);
 
-        Optional<SellerDetails> findByUser_id(UUID user_id);
-
+        Optional<SellerDetails> findByUserId(UUID userId);
 }

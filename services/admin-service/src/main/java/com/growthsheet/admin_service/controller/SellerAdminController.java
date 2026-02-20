@@ -30,7 +30,7 @@ public class SellerAdminController {
         return "hello";
     }
 
-    // /admin/sellers?status=PENDING&page=0&size=10
+    // /admin/seller-applications?status=PENDING&page=0&size=10
     @GetMapping("/seller-applications")
     public Page<SellerApplicationSummaryDTO> getSellerApplications(
             @RequestParam(defaultValue = "PENDING") String status,
