@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -85,8 +86,7 @@ public class SheetController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "latest") String sort,
-            @RequestParam(required = false) Boolean isPublished // null = ทั้งหมด
-    ) {
+            @RequestParam(required = false) Boolean isPublished) {
 
         return ResponseEntity.ok(
                 sheetService.getSheets(page, size, sort, isPublished));
@@ -128,6 +128,18 @@ public class SheetController {
 
         return ResponseEntity.ok(
                 sheetLikeService.getLikedSheets(userId, page, size));
+    }
+
+    @PatchMapping("/{sheetId}/approve")
+    public ResponseEntity<String> approveSheet(@PathVariable UUID sheetId) {
+        sheetService.approveSheet(sheetId);
+        return ResponseEntity.ok("อนุมัติชีทเรียบร้อยแล้ว");
+    }
+
+    @PatchMapping("/{sh-booteetId}/reject")
+    public ResponseEntity<String> rejectSheet(@PathVariable UUID sheetId) {
+        sheetService.rejectSheet(sheetId);
+        return ResponseEntity.ok("ปฏิเสธชีทเรียบร้อยแล้ว");
     }
 
 }

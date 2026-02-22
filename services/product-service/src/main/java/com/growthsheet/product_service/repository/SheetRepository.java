@@ -82,4 +82,16 @@ public interface SheetRepository extends JpaRepository<Sheet, UUID> {
                         """)
         Page<Sheet> findLikedSheets(@Param("userId") UUID userId, Pageable pageable);
 
+        @EntityGraph(attributePaths = {
+                        "university",
+                        "category",
+                        "hashtags",
+                        "previewImages"
+        })
+        // เพิ่ม Method นี้เพื่อรองรับการกรองหลาย Status พร้อมกับ isPublished
+        Page<Sheet> findByStatusInAndIsPublished(
+                        java.util.List<SheetStatus> statuses,
+                        Boolean isPublished,
+                        Pageable pageable);
+
 }

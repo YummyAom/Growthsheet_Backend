@@ -66,6 +66,14 @@ spring:
             - AuthenticationFilter
             - PrefixPath=/api
 
+        - id: admin-service
+          uri: ${ADMIN_SERVICE_URL}
+          predicates:
+            - Path=/admin/**
+          filters:
+            - AuthenticationFilter
+            - PrefixPath=/api
+
         - id: file-service
           uri: ${FILE_SERVICE_URL}
           predicates:

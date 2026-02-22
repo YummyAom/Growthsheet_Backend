@@ -18,7 +18,7 @@ import com.growthsheet.admin_service.service.SellerAdminService;
 
 import lombok.RequiredArgsConstructor;
 
-@RestController // << เพิ่มตัวนี้
+@RestController 
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class SellerAdminController {
@@ -27,7 +27,7 @@ public class SellerAdminController {
 
     @GetMapping("/")
     public String getHello() {
-        return "hello";
+        return "hello admin seller";
     }
 
     // /admin/seller-applications?status=PENDING&page=0&size=10

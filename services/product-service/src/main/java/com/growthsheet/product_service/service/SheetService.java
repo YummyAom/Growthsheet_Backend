@@ -137,16 +137,19 @@ public class SheetService {
                 Page<Sheet> sheets;
 
                 if (isPublished == null) {
-                        // ทั้งหมด
-                        sheets = sheetRepo.findByStatus(
-                                        SheetStatus.APPROVED,
+                        // ดึงทั้งหมดทุกสถานะ (หรือเฉพาะที่ต้องการ เช่น APPROVED, PENDING, REJECTED)
+                        sheets = sheetRepo.findAll(pageable);
+                } else if (isPublished) {
+                        // true = กรองเฉพาะ APPROVED
+                        sheets = sheetRepo.findByStatusInAndIsPublished(
+                                        List.of(SheetStatus.APPROVED),
+                                        true,
                                         pageable);
                 } else {
-                        // true = public
-                        // false = private
-                        sheets = sheetRepo.findByStatusAndIsPublished(
-                                        SheetStatus.APPROVED,
-                                        isPublished,
+                        // false = กรอง PENDING และ REJECTED
+                        sheets = sheetRepo.findByStatusInAndIsPublished(
+                                        List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
+                                        false,
                                         pageable);
                 }
 
@@ -274,5 +277,23 @@ public class SheetService {
                 review.setComment(comment);
 
                 reviewRepo.save(review);
+        }
+
+        @Transactional
+        public void approveSheet(UUID sheetId) {
+                Sheet sheet = sheetRepo.findById(sheetId)
+                                .orElseThrow(() -> new RuntimeException("Sheet not found"));
+
+                sheet.setStatus(SheetStatus.APPROVED);
+                sheet.setIsPublished(true);
+        }
+
+        @Transactional
+        public void rejectSheet(UUID sheetId) {
+                Sheet sheet = sheetRepo.findById(sheetId)
+                                .orElseThrow(() -> new RuntimeException("Sheet not found"));
+
+                sheet.setStatus(SheetStatus.REJECTED);
+                sheet.setIsPublished(false);
         }
 }
