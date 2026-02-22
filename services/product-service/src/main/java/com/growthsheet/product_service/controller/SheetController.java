@@ -136,7 +136,7 @@ public class SheetController {
         return ResponseEntity.ok("อนุมัติชีทเรียบร้อยแล้ว");
     }
 
-    @PatchMapping("/{sh-booteetId}/reject")
+    @PatchMapping("/{sheetId}/reject")
     public ResponseEntity<String> rejectSheet(@PathVariable UUID sheetId) {
         sheetService.rejectSheet(sheetId);
         return ResponseEntity.ok("ปฏิเสธชีทเรียบร้อยแล้ว");
