@@ -35,3 +35,9 @@ order:
 omise:
   public_key: ${PKEY_OMISE}
   secret_key: ${SKEY_OMISE}
+
+feign:
+  httpclient:
+    enabled: true
+  okhttp:
+    enabled: false

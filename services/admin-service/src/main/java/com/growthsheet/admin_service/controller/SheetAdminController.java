@@ -3,18 +3,23 @@ package com.growthsheet.admin_service.controller;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.growthsheet.admin_service.config.client.ProductClient;
+import com.growthsheet.admin_service.dto.RejectRequest;
 import com.growthsheet.admin_service.dto.sheets.AdminSheetDetailResponse;
 import com.growthsheet.admin_service.dto.sheets.PageResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetCardResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetDetailResponse;
 import com.growthsheet.admin_service.entity.SheetReviewLog;
 import com.growthsheet.admin_service.repository.SheetReviewLogRepository;
+import com.growthsheet.admin_service.service.SheetAdminService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/admin/sheets-applications")
 @RequiredArgsConstructor
 public class SheetAdminController {
+    private final SheetAdminService sheetAdminService;
     private final ProductClient productClient;
     private final SheetReviewLogRepository logRepository;
 
@@ -39,34 +45,39 @@ public class SheetAdminController {
         return productClient.getSheets(page, size, sort, false);
     }
 
-    public void approve(UUID sheetId, UUID adminId, UUID sellerId) {
+    @PatchMapping("/{sheetId}/approve")
+    public String approve(
+            @PathVariable UUID sheetId,
+            @RequestHeader("X-USER-ID") UUID adminId) {
 
-        // 1. update product
-        productClient.approveSheet(sheetId);
+        var sheet = productClient.getSheetById(sheetId);
 
-        // 2. save log (no comment)
-        SheetReviewLog log = new SheetReviewLog();
-        log.setSheetId(sheetId);
-        log.setSellerId(sellerId);
-        log.setAdminId(adminId);
-        log.setAction("APPROVED");
-        log.setComment(null);
+        UUID sellerId = null;
+        if (sheet.getSeller() != null) {
+            sellerId = sheet.getSeller().getId();
+        }
 
-        logRepository.save(log);
+        sheetAdminService.approve(sheetId, adminId, sellerId);
+
+        return "อนุมัติชีทเรียบร้อยแล้ว";
     }
 
-    public void reject(UUID sheetId, UUID adminId, UUID sellerId, String comment) {
+    @PatchMapping("/{sheetId}/reject")
+    public String reject(
+            @PathVariable UUID sheetId,
+            @RequestHeader("X-USER-ID") UUID adminId,
+            @RequestBody RejectRequest request) {
 
-        productClient.rejectSheet(sheetId);
+        var sheet = productClient.getSheetById(sheetId);
 
-        SheetReviewLog log = new SheetReviewLog();
-        log.setSheetId(sheetId);
-        log.setSellerId(sellerId);
-        log.setAdminId(adminId);
-        log.setAction("REJECTED");
-        log.setComment(comment);
+        UUID sellerId = null;
+        if (sheet.getSeller() != null) {
+            sellerId = sheet.getSeller().getId();
+        }
 
-        logRepository.save(log);
+        sheetAdminService.reject(sheetId, adminId, sellerId, request);
+
+        return "ปฏิเสธชีทเรียบร้อยแล้ว";
     }
 
     @GetMapping("/{sheetId}")
@@ -86,16 +97,25 @@ public class SheetAdminController {
             lastComment = log.getComment();
         }
 
+        // คำนวณ status
+        String status;
+        if ("REJECTED".equals(lastAction)) {
+            status = "REJECTED";
+        } else if (Boolean.TRUE.equals(sheet.getIsPublished())) {
+            status = "APPROVED";
+        } else {
+            status = "PENDING";
+        }
+
         return new AdminSheetDetailResponse(
-                sheet.id(),
-                sheet.title(),
-                sheet.description(),
-                sheet.status(),
-                sheet.isPublished(),
-                sheet.sellerId(),
-                sheet.imageUrl(), 
+                sheet.getId(),
+                sheet.getTitle(),
+                sheet.getDescription(),
+                status,
+                sheet.getIsPublished(),
+                sheet.getSeller(), // ← ส่งทั้ง object
+                sheet.getImageUrl(),
                 lastAction,
                 lastComment);
     }
-
 }

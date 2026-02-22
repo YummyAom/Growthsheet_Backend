@@ -1,6 +1,7 @@
 package com.growthsheet.admin_service.dto.sheets;
 
 import java.util.UUID;
+import com.growthsheet.admin_service.dto.SellerDTO;
 
 public record AdminSheetDetailResponse(
         UUID id,
@@ -8,7 +9,7 @@ public record AdminSheetDetailResponse(
         String description,
         String status,
         Boolean isPublished,
-        UUID sellerId,
+        SellerDTO seller,   // ← ใช้ object แทน
         String imageUrl,
         String lastAction,
         String lastComment
