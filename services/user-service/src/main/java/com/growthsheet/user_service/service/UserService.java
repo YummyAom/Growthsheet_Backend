@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.user_service.dto.requests.RegistorSellerRequest;
 import com.growthsheet.user_service.dto.requests.UserUpdateProfileRequestDTO;
-import com.growthsheet.user_service.dto.response.UserProfileResponseDTO;
 import com.growthsheet.user_service.entity.SellerDetail;
 import com.growthsheet.user_service.entity.University;
 import com.growthsheet.user_service.entity.User;

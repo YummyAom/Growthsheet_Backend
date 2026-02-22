@@ -56,6 +56,7 @@ public class SellerAdminController {
                 userId,
                 status,
                 comment,
-                adminId);
+                adminId
+        );
     }
 }

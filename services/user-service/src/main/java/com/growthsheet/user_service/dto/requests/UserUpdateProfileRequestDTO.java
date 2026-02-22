@@ -4,11 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 public class UserUpdateProfileRequestDTO {
 
     @NotBlank(message = "กรุณากรอกชื่อ")
@@ -24,4 +20,38 @@ public class UserUpdateProfileRequestDTO {
     @Min(value = 1, message = "ชั้นปีต้องอยู่ระหว่าง 1-4")
     @Max(value = 4, message = "ชั้นปีต้องอยู่ระหว่าง 1-4")
     private Integer studentYear;
+
+    // --- Getter & Setter Methods ---
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getUniversityId() {
+        return universityId;
+    }
+
+    public void setUniversityId(Long universityId) {
+        this.universityId = universityId;
+    }
+
+    public String getFaculty() {
+        return faculty;
+    }
+
+    public void setFaculty(String faculty) {
+        this.faculty = faculty;
+    }
+
+    public Integer getStudentYear() {
+        return studentYear;
+    }
+
+    public void setStudentYear(Integer studentYear) {
+        this.studentYear = studentYear;
+    }
 }
