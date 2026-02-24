@@ -2,13 +2,13 @@ package com.growthsheet.user_service.dto.response;
 
 import com.growthsheet.user_service.dto.UniversityDTO;
 import com.growthsheet.user_service.entity.User;
-
+import java.util.UUID;
 import lombok.Getter;
 
 @Getter
 public class UserProfileResponseDTO {
 
-    private Long id;
+    private UUID id;
     private String name;
     private String email;
     private String userPhotoUrl;
