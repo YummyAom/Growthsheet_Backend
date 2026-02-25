@@ -55,7 +55,7 @@ public class UserController {
         return userService.approveSeller(userId);
     }
 
-     @GetMapping("/me")
+    @GetMapping("/me")
     public UserProfileResponseDTO getProfile(
             @RequestHeader("X-USER-ID") UUID userId) {
 
@@ -78,6 +78,11 @@ public class UserController {
 
         userService.updatePhoto(userId, request.getPhotoUrl());
         return "Photo updated";
+    }
+
+    @GetMapping("/{id}")
+    public UserProfileResponseDTO getUserById(@PathVariable UUID id) {
+        return new UserProfileResponseDTO(userService.getProfile(id));
     }
 
 

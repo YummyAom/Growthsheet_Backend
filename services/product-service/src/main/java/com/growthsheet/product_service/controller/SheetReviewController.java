@@ -1,10 +1,12 @@
 package com.growthsheet.product_service.controller;
 
+import java.util.List;
 import java.util.UUID;
 import jakarta.validation.Valid; // สำหรับตรวจสอบ @NotBlank, @NotNull
 import org.springframework.web.bind.annotation.*;
 
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
+import com.growthsheet.product_service.dto.response.ReviewResponse;
 import com.growthsheet.product_service.service.ReviewService;
 
 @RestController
@@ -26,10 +28,28 @@ public class SheetReviewController {
         return reviewService.createReview(userId, sheetId, request);
     }
 
-    // @GetMapping("/{sheetId}/reviews") 
-    // public String getReviewBySheetId(
-    //     @PathVariable UUID sheetId
-    // ){
-    //     return "rr";
-    // }
+    @GetMapping("/{sheetId}/reviews") 
+    public List<ReviewResponse> getReviewBySheetId(
+        @PathVariable UUID sheetId
+    ){
+        return reviewService.getReviewBySheetId(sheetId);
+    }
+
+    @PutMapping("/reviews/{reviewId}")
+    public String updateReview(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @PathVariable UUID reviewId,
+        @Valid @RequestBody SheetReviewRequest request
+    ) {
+        return reviewService.updateReview(userId, reviewId, request);
+    }
+
+    // ลบริวิว
+    @DeleteMapping("/reviews/{reviewId}")
+    public String deleteReview(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @PathVariable UUID reviewId
+    ) {
+        return reviewService.deleteReview(userId, reviewId);
+    }
 }
