@@ -10,8 +10,9 @@ public class UserUpdateProfileRequestDTO {
     @NotBlank(message = "กรุณากรอกชื่อ")
     private String name;
 
-    @NotNull(message = "กรุณาเลือกมหาวิทยาลัย")
-    private Long universityId;
+    // เปลี่ยนจาก Long เป็น String และใช้ @NotBlank แทน @NotNull
+    @NotBlank(message = "กรุณากรอกชื่อมหาวิทยาลัย")
+    private String university;
 
     @NotBlank(message = "กรุณากรอกคณะ")
     private String faculty;
@@ -31,12 +32,13 @@ public class UserUpdateProfileRequestDTO {
         this.name = name;
     }
 
-    public Long getUniversityId() {
-        return universityId;
+    // เปลี่ยนชื่อ Method ให้ตรงกับชื่อ Field 'university'
+    public String getUniversity() {
+        return university;
     }
 
-    public void setUniversityId(Long universityId) {
-        this.universityId = universityId;
+    public void setUniversity(String university) {
+        this.university = university;
     }
 
     public String getFaculty() {

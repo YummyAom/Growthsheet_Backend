@@ -31,9 +31,8 @@ public class User {
 
     private String faculty;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "university_id")
-    private University university;
+    @Column(name = "university", length = 255)
+    private String university;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -115,11 +114,11 @@ public class User {
         this.faculty = faculty;
     }
 
-    public University getUniversity() {
+    public String getUniversity() {
         return university;
     }
 
-    public void setUniversity(University university) {
+    public void setUniversity(String university) {
         this.university = university;
     }
 
