@@ -2,6 +2,9 @@ package com.growthsheet.user_service.entity;
 
 import jakarta.persistence.*;
 import java.util.UUID;
+
+import com.growthsheet.user_service.dto.SellerStatus;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,8 +43,9 @@ public class SellerDetail {
     private String bankAccountNumber;
     private String bankAccountName;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "is_verified")
-    private String status;
+    private SellerStatus status;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -54,7 +58,7 @@ public class SellerDetail {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         if (this.status == null)
-            this.status = "pending";
+            this.status = SellerStatus.PENDING;
     }
 
     @PreUpdate
@@ -163,11 +167,11 @@ public class SellerDetail {
         this.bankAccountName = bankAccountName;
     }
 
-    public String getStatus() {
+    public SellerStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(SellerStatus status) {
         this.status = status;
     }
 

@@ -91,4 +91,6 @@ public class AuthController {
                 "status", "success",
                 "message", "OTP verified successfully");
     }
+
+    
 }

@@ -2,6 +2,7 @@ package com.growthsheet.user_service.controller;
 
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,10 +16,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.user_service.dto.requests.RegistorSellerRequest;
 import com.growthsheet.user_service.dto.requests.UpdatePhotoRequestDTO;
+import com.growthsheet.user_service.dto.requests.UpdateUserRoleRequest;
 import com.growthsheet.user_service.dto.requests.UserUpdateProfileRequestDTO;
 import com.growthsheet.user_service.dto.response.UserProfileResponseDTO;
+import com.growthsheet.user_service.entity.User;
+import com.growthsheet.user_service.entity.UserRole;
 import com.growthsheet.user_service.service.UserService;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.Valid;
 
 @RestController
@@ -85,7 +92,20 @@ public class UserController {
         return new UserProfileResponseDTO(userService.getProfile(id));
     }
 
+    @GetMapping("/page-status")
+    public String getSellerPageStatus(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @RequestHeader("X-USER-ROLE") String role) {
 
-    // @GetMapping("/sellers")
-    // public
+        return userService.getSellerPageStatus(userId, role);
+    }
+
+    @PutMapping("/{userId}/role")
+    public String updateUserRole(
+            @PathVariable UUID userId,
+            @RequestBody UpdateUserRoleRequest request) {
+
+        userService.updateUserRole(userId, request.getRole());
+        return "User role updated";
+    }
 }

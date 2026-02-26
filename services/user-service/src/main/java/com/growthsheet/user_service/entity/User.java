@@ -21,6 +21,7 @@ public class User {
     private Boolean enabled;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "role")
     private UserRole role;
 
     @Column(name = "user_photo_url")

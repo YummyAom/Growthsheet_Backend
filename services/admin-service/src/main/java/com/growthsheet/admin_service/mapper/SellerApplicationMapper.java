@@ -27,8 +27,8 @@ public class SellerApplicationMapper {
         dto.setBank_account_name(entity.getBankAccountName());
 
         // Enum → String
-        if (entity.getIsVerified() != null) {
-            dto.setIs_verified(entity.getIsVerified().name());
+        if (entity.getStatus() != null) {
+            dto.setIs_verified(entity.getStatus().name());
         }
 
         dto.setAdmin_comment(entity.getAdminComment());

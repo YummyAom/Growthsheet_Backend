@@ -1,12 +1,21 @@
 package com.growthsheet.user_service.service;
 
+import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.growthsheet.user_service.dto.SellerStatus;
 import com.growthsheet.user_service.dto.requests.RegistorSellerRequest;
+import com.growthsheet.user_service.dto.requests.UpdateUserRoleRequest;
 import com.growthsheet.user_service.dto.requests.UserUpdateProfileRequestDTO;
 import com.growthsheet.user_service.entity.SellerDetail;
 import com.growthsheet.user_service.entity.User;
@@ -66,7 +75,7 @@ public class UserService {
         sellerDetail.setBankName(request.bankName());
         sellerDetail.setBankAccountNumber(request.bankAccountNumber());
         sellerDetail.setBankAccountName(request.bankAccountName());
-        sellerDetail.setStatus("PENDING");
+        sellerDetail.setStatus(SellerStatus.PENDING);
 
         sellerDetailRepository.save(sellerDetail);
 
@@ -82,7 +91,7 @@ public class UserService {
         SellerDetail sellerDetail = sellerDetailRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("ไม่พบข้อมูลผู้ขาย"));
 
-        sellerDetail.setStatus("approved");
+        sellerDetail.setStatus(SellerStatus.APPROVED);
 
         user.setRole(UserRole.SELLER);
 
@@ -120,6 +129,55 @@ public class UserService {
 
         User user = getProfile(userId);
         user.setUserPhotoUrl(photoUrl);
+
+        userRepository.save(user);
+    }
+
+    public String getSellerPageStatus(UUID userId, String role) {
+
+        // 1) ถ้า role เป็น SELLER แล้ว เข้าได้เลย
+        if ("SELLER".equals(role)) {
+            return "SELLER_PAGE";
+        }
+
+        Optional<SellerDetail> sellerOpt = sellerDetailRepository.findByUserId(userId);
+
+        if (sellerOpt.isEmpty()) {
+            return "APPLY_PAGE";
+        }
+
+        SellerDetail seller = sellerOpt.get();
+        SellerStatus status = seller.getStatus();
+
+        if (status == SellerStatus.PENDING) {
+            return "PENDING_PAGE";
+        }
+
+        if (status == SellerStatus.REJECTED) {
+            return "REJECTED_PAGE";
+        }
+
+        if (status == SellerStatus.APPROVED) {
+            return "NEED_REFRESH";
+        }
+
+        return "APPLY_PAGE";
+    }
+
+    @Transactional
+    public void updateUserRole(UUID userId, String role) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserRole newRole;
+        try {
+            newRole = UserRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid role");
+        }
+
+        user.setRole(newRole);
 
         userRepository.save(user);
     }

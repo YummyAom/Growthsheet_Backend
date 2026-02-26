@@ -54,8 +54,8 @@ public class SellerDetails {
     private String bankAccountName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private SellerStatus isVerified;
+    @Column(name = "is_verified")
+    private SellerStatus status;
 
     @Column(name = "admin_comment")
     private String adminComment;
