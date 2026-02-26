@@ -1,24 +1,55 @@
 package com.growthsheet.product_service.controller;
 
+import java.util.List;
 import java.util.UUID;
+import jakarta.validation.Valid; // สำหรับตรวจสอบ @NotBlank, @NotNull
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.growthsheet.product_service.dto.request.SheetReviewRequest;
+import com.growthsheet.product_service.dto.response.ReviewResponse;
+import com.growthsheet.product_service.service.ReviewService;
 
-import com.growthsheet.product_service.dto.response.SheetReviewResponseDTO;
+@RestController
+@RequestMapping("/api/products")
+public class SheetReviewController {
 
-// @RestController
-// @RequestMapping("/api/products")
-// public class SheetReviewController {
-//     @GetMapping("/{id}/reviews")
-//     public Page<SheetReviewResponseDTO> getReviews(
-//             @PathVariable UUID id,
-//             @RequestParam(defaultValue = "0") int page,
-//             @RequestParam(defaultValue = "5") int size) {
-//                 return sheetService.getSheets(id, page, size);
-//     }
-// }
+    private final ReviewService reviewService;
+
+    public SheetReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
+
+    @PostMapping("/{sheetId}/reviews") 
+    public String createReview(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @PathVariable UUID sheetId,
+        @Valid @RequestBody SheetReviewRequest request 
+    ) {
+        return reviewService.createReview(userId, sheetId, request);
+    }
+
+    @GetMapping("/{sheetId}/reviews") 
+    public List<ReviewResponse> getReviewBySheetId(
+        @PathVariable UUID sheetId
+    ){
+        return reviewService.getReviewBySheetId(sheetId);
+    }
+
+    @PutMapping("/reviews/{reviewId}")
+    public String updateReview(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @PathVariable UUID reviewId,
+        @Valid @RequestBody SheetReviewRequest request
+    ) {
+        return reviewService.updateReview(userId, reviewId, request);
+    }
+
+    // ลบริวิว
+    @DeleteMapping("/reviews/{reviewId}")
+    public String deleteReview(
+        @RequestHeader("X-USER-ID") UUID userId,
+        @PathVariable UUID reviewId
+    ) {
+        return reviewService.deleteReview(userId, reviewId);
+    }
+}

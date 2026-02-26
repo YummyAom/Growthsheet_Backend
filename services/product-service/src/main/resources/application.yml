@@ -20,6 +20,17 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+user:
+  service:
+    url: ${AUTH_SERVICE_URL} 
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL}
+
+order:
+  service: 
+    url: ${ORDER_SERVICE_URL}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -27,3 +38,5 @@ jwt:
 
 cloudinary:
   url: ${CLOUDINARY_URL}
+
+
