@@ -3,6 +3,8 @@ package com.growthsheet.product_service.service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,6 +32,9 @@ import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 import com.growthsheet.product_service.repository.UserRepository;
 
+import com.growthsheet.product_service.config.client.OrderClient;
+import com.growthsheet.product_service.dto.client.OrderResponse;
+
 import jakarta.transaction.Transactional;
 
 @Service
@@ -45,6 +50,8 @@ public class SheetService {
         private final SheetAssembler sheetAssembler;
         private final SheetCardMapper sheetCardMapper;
 
+        private final OrderClient orderClient;
+
         public SheetService(
                         SheetRepository sheetRepo,
                         CategoryRepository categoryRepo,
@@ -54,7 +61,9 @@ public class SheetService {
                         UserRepository userRepo,
                         ReviewRepository reviewRepo,
                         SheetAssembler sheetAssembler,
-                        SheetCardMapper sheetCardMapper) {
+                        SheetCardMapper sheetCardMapper,
+                        OrderClient orderClient
+                        ) {
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -64,7 +73,44 @@ public class SheetService {
                 this.reviewRepo = reviewRepo;
                 this.sheetAssembler = sheetAssembler;
                 this.sheetCardMapper = sheetCardMapper;
+                this.orderClient = orderClient;
         }
+
+        public List<SheetCardResponse> getPurchasedSheets(UUID userId) {
+    try {
+        // 1. ดึงประวัติการสั่งซื้อ
+        List<OrderResponse> orders = orderClient.getOrdersByUser(userId);
+
+        // --- ป้องกันค่า Null ---
+        if (orders == null || orders.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. กรองข้อมูล (เพิ่มเช็คว่า status และ items ไม่ใช่ null)
+        Set<UUID> purchasedSheetIds = orders.stream()
+                .filter(order -> order != null && "PAID".equals(order.getStatus()))
+                .filter(order -> order.getItems() != null) // เช็ค null ป้องกัน error
+                .flatMap(order -> order.getItems().stream())
+                .map(OrderResponse.Item::getSheetId)
+                .collect(Collectors.toSet());
+
+        if (purchasedSheetIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 3. ดึงข้อมูลจากฐานข้อมูล
+        List<Sheet> purchasedSheets = sheetRepo.findAllById(purchasedSheetIds);
+
+        return purchasedSheets.stream()
+                .map(this::toSheetCardResponse)
+                .toList();
+
+    } catch (Exception e) {
+        // พิมพ์ Error ออกทางหน้าจอ Console เพื่อให้เรารู้ว่าพังที่บรรทัดไหน
+        e.printStackTrace(); 
+        throw new RuntimeException("เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.getMessage());
+    }
+}
 
         @Transactional
         public SheetResponse createSheet(
