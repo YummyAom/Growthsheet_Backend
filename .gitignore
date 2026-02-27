@@ -10,3 +10,6 @@ build/
 
 # ignore OS files
 .DS_Store
+
+run.sh
+stop.sh

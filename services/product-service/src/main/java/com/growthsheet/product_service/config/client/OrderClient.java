@@ -12,6 +12,6 @@ import com.growthsheet.product_service.dto.client.OrderResponse;
 
 @FeignClient(name = "order-service", url = "${ORDER_SERVICE_URL}", configuration = FeignOkHttpConfig.class)
 public interface OrderClient {
-    @GetMapping("/order/user")
+    @GetMapping("/api/order/user")
     List<OrderResponse> getOrdersByUser(@RequestHeader("X-USER-ID") UUID userId);
 }

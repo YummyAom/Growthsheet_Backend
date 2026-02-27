@@ -73,6 +73,14 @@ public class SheetController {
         return ResponseEntity.ok(fileService.uploadFile(file));
     }
 
+    //เรียกดู purchased Order
+    @GetMapping("/purchased")
+    public ResponseEntity<List<SheetCardResponse>> getPurchasedSheets(@RequestHeader("X-USER-ID") UUID userId){
+        List<SheetCardResponse> purchasedSheets = sheetService.getPurchasedSheets(userId);
+        return ResponseEntity.ok(purchasedSheets);
+    }
+    
+
     // @GetMapping
     // public ResponseEntity<Page<SheetCardResponse>> getSheets(
     // @RequestParam(defaultValue = "0") int page,
