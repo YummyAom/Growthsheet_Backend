@@ -29,7 +29,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderClient orderClient;
-    // private final ObjectMapper objectMapper;
+    
     private final PaymentRepository paymentRepo;
 
     @GetMapping("/")

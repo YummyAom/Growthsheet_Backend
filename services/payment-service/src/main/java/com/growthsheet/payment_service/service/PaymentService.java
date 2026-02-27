@@ -2,14 +2,6 @@ package com.growthsheet.payment_service.service;
 
 import co.omise.Client;
 import co.omise.models.Charge;
-import co.omise.models.Source;
-import co.omise.requests.Request;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.PaymentStatus;
-import com.growthsheet.payment_service.dto.PromptPayResponse;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 
