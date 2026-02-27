@@ -3,9 +3,10 @@ package com.growthsheet.notificaiton.service;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import com.growthsheet.notificaiton.NotificaitonApplication;
 import com.growthsheet.notificaiton.entity.Notification;
 import com.growthsheet.notificaiton.repository.NotificationRepository;
 
@@ -30,6 +31,13 @@ public class NotificationService {
         return notification;
     }
 
+    public Page<Notification> getUserNotifications(
+        UUID userId,
+        Pageable pageable
+    ){
+        return notificationRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    }
+
     public long countUnread(UUID userId) {
         return notificationRepo.countByUserIdAndIsReadFalse(userId);
     }
@@ -45,7 +53,7 @@ public class NotificationService {
     public void markAllRead(UUID userId){
         var list = notificationRepo.findByUserIdAndIsReadFalse(userId);
         list.forEach(
-            n -> n.setIsRead(true);
+            n -> n.setIsRead(true)
         );
 
         notificationRepo.saveAll(list);
