@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.growthsheet.order_service.dto.PageResponse;
 import com.growthsheet.order_service.dto.request.CheckoutRequest;
 import com.growthsheet.order_service.dto.response.OrderResponse;
 import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.service.OrderService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/order")
@@ -45,6 +49,15 @@ public class OrderController {
             @RequestHeader("X-USER-ID") UUID userId) {
 
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
+    }
+
+    @GetMapping("/user/paid")
+    public ResponseEntity<PageResponse<OrderResponse>> getPaidOrders(
+            @RequestHeader("X-USER-ID") UUID userId,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(
+                orderService.getPaidOrdersByUser(userId, pageable));
     }
 
     @GetMapping("/pending")

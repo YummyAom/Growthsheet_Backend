@@ -6,6 +6,10 @@ import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.growthsheet.product_service.dto.PageResponse;
+import java.util.Collection;
+import java.util.stream.Stream;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Page;
@@ -40,310 +44,297 @@ import jakarta.transaction.Transactional;
 @Service
 public class SheetService {
 
-        private final SheetRepository sheetRepo;
-        private final CategoryRepository categoryRepo;
-        private final HashtagService hashtagService;
-        private final SheetImageService sheetImageService;
-        private final UniversityService universityService;
-        private final UserRepository userRepo;
-        private final ReviewRepository reviewRepo;
-        private final SheetAssembler sheetAssembler;
-        private final SheetCardMapper sheetCardMapper;
+    private final SheetRepository sheetRepo;
+    private final CategoryRepository categoryRepo;
+    private final HashtagService hashtagService;
+    private final SheetImageService sheetImageService;
+    private final UniversityService universityService;
+    private final UserRepository userRepo;
+    private final ReviewRepository reviewRepo;
+    private final SheetAssembler sheetAssembler;
+    private final SheetCardMapper sheetCardMapper;
 
-        private final OrderClient orderClient;
+    private final OrderClient orderClient;
 
-        public SheetService(
-                        SheetRepository sheetRepo,
-                        CategoryRepository categoryRepo,
-                        HashtagService hashtagService,
-                        SheetImageService sheetImageService,
-                        UniversityService universityService,
-                        UserRepository userRepo,
-                        ReviewRepository reviewRepo,
-                        SheetAssembler sheetAssembler,
-                        SheetCardMapper sheetCardMapper,
-                        OrderClient orderClient
-                        ) {
-                this.sheetRepo = sheetRepo;
-                this.categoryRepo = categoryRepo;
-                this.hashtagService = hashtagService;
-                this.sheetImageService = sheetImageService;
-                this.universityService = universityService;
-                this.userRepo = userRepo;
-                this.reviewRepo = reviewRepo;
-                this.sheetAssembler = sheetAssembler;
-                this.sheetCardMapper = sheetCardMapper;
-                this.orderClient = orderClient;
-        }
+    public SheetService(
+            SheetRepository sheetRepo,
+            CategoryRepository categoryRepo,
+            HashtagService hashtagService,
+            SheetImageService sheetImageService,
+            UniversityService universityService,
+            UserRepository userRepo,
+            ReviewRepository reviewRepo,
+            SheetAssembler sheetAssembler,
+            SheetCardMapper sheetCardMapper,
+            OrderClient orderClient) {
+        this.sheetRepo = sheetRepo;
+        this.categoryRepo = categoryRepo;
+        this.hashtagService = hashtagService;
+        this.sheetImageService = sheetImageService;
+        this.universityService = universityService;
+        this.userRepo = userRepo;
+        this.reviewRepo = reviewRepo;
+        this.sheetAssembler = sheetAssembler;
+        this.sheetCardMapper = sheetCardMapper;
+        this.orderClient = orderClient;
+    }
 
-        public List<SheetCardResponse> getPurchasedSheets(UUID userId) {
-    try {
-        // 1. ดึงประวัติการสั่งซื้อ
-        List<OrderResponse> orders = orderClient.getOrdersByUser(userId);
+    public PageResponse<SheetCardResponse> getPurchasedSheets(UUID userId, Pageable pageable) {
 
-        // --- ป้องกันค่า Null ---
-        if (orders == null || orders.isEmpty()) {
-            return List.of();
-        }
+        PageResponse<OrderResponse> orderPage = orderClient.getPaidOrders(userId, pageable);
 
-        // 2. กรองข้อมูล (เพิ่มเช็คว่า status และ items ไม่ใช่ null)
-        Set<UUID> purchasedSheetIds = orders.stream()
-                .filter(order -> order != null && "PAID".equals(order.getStatus()))
-                .filter(order -> order.getItems() != null) // เช็ค null ป้องกัน error
+        Set<UUID> sheetIds = orderPage.getContent().stream()
                 .flatMap(order -> order.getItems().stream())
                 .map(OrderResponse.Item::getSheetId)
                 .collect(Collectors.toSet());
 
-        if (purchasedSheetIds.isEmpty()) {
-            return List.of();
-        }
+        List<Sheet> sheets = sheetRepo.findAllById(sheetIds);
 
-        // 3. ดึงข้อมูลจากฐานข้อมูล
-        List<Sheet> purchasedSheets = sheetRepo.findAllById(purchasedSheetIds);
-
-        return purchasedSheets.stream()
+        List<SheetCardResponse> content = sheets.stream()
                 .map(this::toSheetCardResponse)
                 .toList();
 
-    } catch (Exception e) {
-        // พิมพ์ Error ออกทางหน้าจอ Console เพื่อให้เรารู้ว่าพังที่บรรทัดไหน
-        e.printStackTrace(); 
-        throw new RuntimeException("เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.getMessage());
+        return new PageResponse<>(
+                content,
+                orderPage.getPage(),
+                orderPage.getSize(),
+                orderPage.getTotalElements(),
+                orderPage.getTotalPages(),
+                orderPage.isLast());
     }
-}
 
-        @Transactional
-        public SheetResponse createSheet(
-                        CreateSheetRequest req,
-                        UUID sellerId,
-                        Map<String, Object> pdf,
-                        List<String> images) {
+    @Transactional
+    public SheetResponse createSheet(
+            CreateSheetRequest req,
+            UUID sellerId,
+            Map<String, Object> pdf,
+            List<String> images) {
 
-                Category category = categoryRepo.findById(req.categoryId())
-                                .orElseThrow(() -> new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Category not found"));
+        Category category = categoryRepo.findById(req.categoryId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Category not found"));
 
-                Sheet sheet = new Sheet();
-                sheet.setUniversity(universityService.findOrNull(req.universityId()));
-                sheet.setTitle(req.title());
-                sheet.setDescription(req.description());
-                sheet.setPrice(req.price());
+        Sheet sheet = new Sheet();
+        sheet.setUniversity(universityService.findOrNull(req.universityId()));
+        sheet.setTitle(req.title());
+        sheet.setDescription(req.description());
+        sheet.setPrice(req.price());
 
-                sheet.setFileUrl((String) pdf.get("url"));
-                sheet.setPageCount((Integer) pdf.get("pageCount"));
+        sheet.setFileUrl((String) pdf.get("url"));
+        sheet.setPageCount((Integer) pdf.get("pageCount"));
 
-                sheet.setCourseCode(req.courseCode());
-                sheet.setCourseName(req.courseName());
-                sheet.setStudyYear(req.studyYear());
-                sheet.setAcademicYear(req.academicYear());
+        sheet.setCourseCode(req.courseCode());
+        sheet.setCourseName(req.courseName());
+        sheet.setStudyYear(req.studyYear());
+        sheet.setAcademicYear(req.academicYear());
 
-                sheet.setCategory(category);
-                sheet.setSellerId(sellerId);
-                sheet.setStatus(SheetStatus.APPROVED);
-                sheet.setIsPublished(true);
+        sheet.setCategory(category);
+        sheet.setSellerId(sellerId);
+        sheet.setStatus(SheetStatus.APPROVED);
+        sheet.setIsPublished(true);
 
-                sheet.setHashtags(
-                                hashtagService.resolveHashtags(req.hashtags()));
+        sheet.setHashtags(
+                hashtagService.resolveHashtags(req.hashtags()));
 
-                sheetRepo.save(sheet);
+        sheetRepo.save(sheet);
 
-                sheetImageService.attachPreviewImages(sheet, images);
+        sheetImageService.attachPreviewImages(sheet, images);
 
-                return SheetResponse.from(sheet);
+        return SheetResponse.from(sheet);
+    }
+
+    private Sort getSort(String sort) {
+        return switch (sort) {
+            case "price_asc" -> Sort.by("price").ascending();
+            case "price_desc" -> Sort.by("price").descending();
+            case "rating" -> Sort.by("averageRating").descending();
+            case "popular" -> Sort.by("likeCount").descending();
+            case "latest" -> Sort.by("createdAt").descending();
+            default -> Sort.by("createdAt").descending();
+        };
+    }
+
+    private SheetCardResponse toSheetCardResponse(Sheet sheet) {
+
+        SellerDTO seller = userRepo.findById(sheet.getSellerId())
+                .map(u -> new SellerDTO(u.getId(), u.getName()))
+                .orElse(null);
+
+        return sheetCardMapper.toResponse(sheet, seller);
+    }
+
+    public Page<SheetCardResponse> getSheets(
+            int page,
+            int size,
+            String sort,
+            Boolean isPublished // null = ทั้งหมด
+    ) {
+        Pageable pageable = PageRequest.of(page, size, getSort(sort));
+
+        Page<Sheet> sheets;
+
+        if (isPublished == null) {
+            // ดึงทั้งหมดทุกสถานะ (หรือเฉพาะที่ต้องการ เช่น APPROVED, PENDING, REJECTED)
+            sheets = sheetRepo.findAll(pageable);
+        } else if (isPublished) {
+            // true = กรองเฉพาะ APPROVED
+            sheets = sheetRepo.findByStatusInAndIsPublished(
+                    List.of(SheetStatus.APPROVED),
+                    true,
+                    pageable);
+        } else {
+            // false = กรอง PENDING และ REJECTED
+            sheets = sheetRepo.findByStatusInAndIsPublished(
+                    List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
+                    false,
+                    pageable);
         }
 
-        private Sort getSort(String sort) {
-                return switch (sort) {
-                        case "price_asc" -> Sort.by("price").ascending();
-                        case "price_desc" -> Sort.by("price").descending();
-                        case "rating" -> Sort.by("averageRating").descending();
-                        case "popular" -> Sort.by("likeCount").descending();
-                        case "latest" -> Sort.by("createdAt").descending();
-                        default -> Sort.by("createdAt").descending();
-                };
+        return sheets.map(this::toSheetCardResponse);
+    }
+
+    public SheetCardResponse getSheetById(UUID sheetId) {
+
+        Sheet sheet = sheetRepo.findById(sheetId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Sheet not found"));
+
+        return sheetAssembler.assemble(sheet);
+    }
+
+    public Page<SheetCardResponse> findSheetPageByUserId(
+            UUID sellerId,
+            int page,
+            int size,
+            Boolean isPublished) {
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Sheet> sheets;
+
+        if (isPublished == null) {
+            // ทั้งหมด
+            sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
+        } else {
+            // กรองตามสถานะ
+            sheets = sheetRepo.findAllBySellerIdAndIsPublished(
+                    sellerId, isPublished, pageable);
         }
 
-        private SheetCardResponse toSheetCardResponse(Sheet sheet) {
+        return sheets.map(sheetAssembler::assemble);
+    }
 
-                SellerDTO seller = userRepo.findById(sheet.getSellerId())
-                                .map(u -> new SellerDTO(u.getId(), u.getName()))
-                                .orElse(null);
+    public ProductResponseDTO getSheet(UUID sheetId) {
 
-                return sheetCardMapper.toResponse(sheet, seller);
+        Sheet sheet = sheetRepo.findById(sheetId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Sheet not found"));
+
+        SellerDTO seller = userRepo.findById(sheet.getSellerId())
+                .map(u -> new SellerDTO(u.getId(), u.getName()))
+                .orElse(null);
+
+        return new ProductResponseDTO(
+                sheet.getId(),
+                sheet.getTitle(),
+                sheet.getDescription(),
+                sheet.getPrice(),
+
+                // image
+                (sheet.getPreviewImages() == null || sheet.getPreviewImages().isEmpty())
+                        ? null
+                        : sheet.getPreviewImages().get(0).getImageUrl(),
+
+                sheet.getFileUrl(),
+
+                // university
+                sheet.getUniversity() == null
+                        ? null
+                        : new UniversityDTO(
+                                sheet.getUniversity().getId(),
+                                sheet.getUniversity().getNameEn()),
+
+                // category
+                sheet.getCategory() == null
+                        ? null
+                        : new CategoryDTO(
+                                sheet.getCategory().getId(),
+                                sheet.getCategory().getName()),
+
+                // tags
+                sheet.getHashtags() == null
+                        ? List.of()
+                        : sheet.getHashtags().stream()
+                                .map(Hashtag::getName)
+                                .toList(),
+
+                // ratingCount
+                sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
+
+                // ratingAverage
+                sheet.getAverageRating() == null
+                        ? 0.0
+                        : sheet.getAverageRating().doubleValue(),
+
+                // seller
+                seller,
+
+                // isPublished
+                sheet.getIsPublished(),
+
+                // pageCount
+                sheet.getPageCount(),
+
+                // createdAt
+                sheet.getCreatedAt(),
+
+                // updatedAt
+                sheet.getUpdatedAt());
+    }
+
+    @Transactional
+    public void createReview(
+            UUID sheetId,
+            UUID userId,
+            int rating,
+            String comment) {
+        if (reviewRepo.existsBySheetIdAndUserId(sheetId, userId)) {
+            throw new IllegalStateException("You already reviewed this sheet");
         }
 
-        public Page<SheetCardResponse> getSheets(
-                        int page,
-                        int size,
-                        String sort,
-                        Boolean isPublished // null = ทั้งหมด
-        ) {
-                Pageable pageable = PageRequest.of(page, size, getSort(sort));
+        SheetReview review = new SheetReview();
+        review.setSheetId(sheetId);
+        review.setUserId(userId);
+        review.setRating(rating);
+        review.setComment(comment);
 
-                Page<Sheet> sheets;
+        reviewRepo.save(review);
+    }
 
-                if (isPublished == null) {
-                        // ดึงทั้งหมดทุกสถานะ (หรือเฉพาะที่ต้องการ เช่น APPROVED, PENDING, REJECTED)
-                        sheets = sheetRepo.findAll(pageable);
-                } else if (isPublished) {
-                        // true = กรองเฉพาะ APPROVED
-                        sheets = sheetRepo.findByStatusInAndIsPublished(
-                                        List.of(SheetStatus.APPROVED),
-                                        true,
-                                        pageable);
-                } else {
-                        // false = กรอง PENDING และ REJECTED
-                        sheets = sheetRepo.findByStatusInAndIsPublished(
-                                        List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
-                                        false,
-                                        pageable);
-                }
+    @Transactional
+    public void approveSheet(UUID sheetId) {
+        Sheet sheet = sheetRepo.findById(sheetId)
+                .orElseThrow(() -> new RuntimeException("Sheet not found"));
 
-                return sheets.map(this::toSheetCardResponse);
-        }
+        sheet.setStatus(SheetStatus.APPROVED);
+        sheet.setIsPublished(true);
+    }
 
-        public SheetCardResponse getSheetById(UUID sheetId) {
+    @Transactional
+    public void rejectSheet(UUID sheetId) {
+        Sheet sheet = sheetRepo.findById(sheetId)
+                .orElseThrow(() -> new RuntimeException("Sheet not found"));
 
-                Sheet sheet = sheetRepo.findById(sheetId)
-                                .orElseThrow(() -> new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND,
-                                                "Sheet not found"));
+        sheet.setStatus(SheetStatus.REJECTED);
+        sheet.setIsPublished(false);
+    }
 
-                return sheetAssembler.assemble(sheet);
-        }
-
-        public Page<SheetCardResponse> findSheetPageByUserId(
-                        UUID sellerId,
-                        int page,
-                        int size,
-                        Boolean isPublished) {
-
-                Pageable pageable = PageRequest.of(
-                                page,
-                                size,
-                                Sort.by(Sort.Direction.DESC, "createdAt"));
-
-                Page<Sheet> sheets;
-
-                if (isPublished == null) {
-                        // ทั้งหมด
-                        sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
-                } else {
-                        // กรองตามสถานะ
-                        sheets = sheetRepo.findAllBySellerIdAndIsPublished(
-                                        sellerId, isPublished, pageable);
-                }
-
-                return sheets.map(sheetAssembler::assemble);
-        }
-
-        public ProductResponseDTO getSheet(UUID sheetId) {
-
-                Sheet sheet = sheetRepo.findById(sheetId)
-                                .orElseThrow(() -> new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND,
-                                                "Sheet not found"));
-
-                SellerDTO seller = userRepo.findById(sheet.getSellerId())
-                                .map(u -> new SellerDTO(u.getId(), u.getName()))
-                                .orElse(null);
-
-                return new ProductResponseDTO(
-                                sheet.getId(),
-                                sheet.getTitle(),
-                                sheet.getDescription(),
-                                sheet.getPrice(),
-
-                                // image
-                                (sheet.getPreviewImages() == null || sheet.getPreviewImages().isEmpty())
-                                                ? null
-                                                : sheet.getPreviewImages().get(0).getImageUrl(),
-
-                                sheet.getFileUrl(),
-
-                                // university
-                                sheet.getUniversity() == null
-                                                ? null
-                                                : new UniversityDTO(
-                                                                sheet.getUniversity().getId(),
-                                                                sheet.getUniversity().getNameEn()),
-
-                                // category
-                                sheet.getCategory() == null
-                                                ? null
-                                                : new CategoryDTO(
-                                                                sheet.getCategory().getId(),
-                                                                sheet.getCategory().getName()),
-
-                                // tags
-                                sheet.getHashtags() == null
-                                                ? List.of()
-                                                : sheet.getHashtags().stream()
-                                                                .map(Hashtag::getName)
-                                                                .toList(),
-
-                                // ratingCount
-                                sheet.getReviewCount() == null ? 0 : sheet.getReviewCount(),
-
-                                // ratingAverage
-                                sheet.getAverageRating() == null
-                                                ? 0.0
-                                                : sheet.getAverageRating().doubleValue(),
-
-                                // seller
-                                seller,
-
-                                // isPublished
-                                sheet.getIsPublished(),
-
-                                // pageCount
-                                sheet.getPageCount(),
-
-                                // createdAt
-                                sheet.getCreatedAt(),
-
-                                // updatedAt
-                                sheet.getUpdatedAt());
-        }
-
-        @Transactional
-        public void createReview(
-                        UUID sheetId,
-                        UUID userId,
-                        int rating,
-                        String comment) {
-                if (reviewRepo.existsBySheetIdAndUserId(sheetId, userId)) {
-                        throw new IllegalStateException("You already reviewed this sheet");
-                }
-
-                SheetReview review = new SheetReview();
-                review.setSheetId(sheetId);
-                review.setUserId(userId);
-                review.setRating(rating);
-                review.setComment(comment);
-
-                reviewRepo.save(review);
-        }
-
-        @Transactional
-        public void approveSheet(UUID sheetId) {
-                Sheet sheet = sheetRepo.findById(sheetId)
-                                .orElseThrow(() -> new RuntimeException("Sheet not found"));
-
-                sheet.setStatus(SheetStatus.APPROVED);
-                sheet.setIsPublished(true);
-        }
-
-        @Transactional
-        public void rejectSheet(UUID sheetId) {
-                Sheet sheet = sheetRepo.findById(sheetId)
-                                .orElseThrow(() -> new RuntimeException("Sheet not found"));
-
-                sheet.setStatus(SheetStatus.REJECTED);
-                sheet.setIsPublished(false);
-        }
-
-        @Transactional
-        public void createReview(UUID sheetId, UUID userId) {
-        }
+    @Transactional
+    public void createReview(UUID sheetId, UUID userId) {
+    }
 }
