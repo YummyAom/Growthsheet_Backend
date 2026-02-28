@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.growthsheet.order_service.dto.PageResponse;
 import com.growthsheet.order_service.dto.request.CheckoutRequest;
 import com.growthsheet.order_service.dto.response.OrderResponse;
 import com.growthsheet.order_service.entity.Cart;
@@ -15,6 +16,9 @@ import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.entity.OrderItem;
 import com.growthsheet.order_service.repository.CartRepository;
 import com.growthsheet.order_service.repository.OrderRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import jakarta.transaction.Transactional;
 
@@ -80,6 +84,15 @@ public class OrderService {
         return savedOrder;
     }
 
+    public PageResponse<OrderResponse> getPaidOrdersByUser(UUID userId, Pageable pageable) {
+
+        Page<OrderResponse> page = orderRepo
+                .findByUserIdAndStatus(userId, "PAID", pageable)
+                .map(this::mapToResponse);
+
+        return new PageResponse<>(page);
+    }
+
     public List<OrderResponse> getOrdersByUser(UUID userId) {
         return orderRepo.findByUserId(userId)
                 .stream()
@@ -130,7 +143,7 @@ public class OrderService {
         return res;
     }
 
-     @Transactional
+    @Transactional
     public void markAsPaid(UUID orderId) {
 
         Order order = orderRepo.findById(orderId)

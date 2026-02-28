@@ -23,9 +23,13 @@ import com.growthsheet.product_service.dto.request.CreateSheetRequest;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
+import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetLikeService;
 import com.growthsheet.product_service.service.SheetService;
+
+import org.springframework.data.domain.Pageable;
+
 
 import jakarta.validation.Valid;
 
@@ -75,9 +79,11 @@ public class SheetController {
 
     //เรียกดู purchased Order
     @GetMapping("/purchased")
-    public ResponseEntity<List<SheetCardResponse>> getPurchasedSheets(@RequestHeader("X-USER-ID") UUID userId){
-        List<SheetCardResponse> purchasedSheets = sheetService.getPurchasedSheets(userId);
-        return ResponseEntity.ok(purchasedSheets);
+    public PageResponse<SheetCardResponse> getPurchasedSheets(
+        @RequestHeader("X-USER-ID") UUID userId,
+        Pageable pageable) {
+
+        return sheetService.getPurchasedSheets(userId, pageable);
     }
     
 
