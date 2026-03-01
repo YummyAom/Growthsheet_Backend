@@ -14,16 +14,15 @@ import com.growthsheet.payment_service.dto.OrderResponse;
 @FeignClient(name = "order-service", url = "${GATEWAY_SERVICE_URL}")
 public interface OrderClient {
 
-    @GetMapping("/order/pending")
+    @GetMapping("/api/order/pending")
     List<OrderResponse> getPendingOrders(
             @RequestHeader("X-USER-ID") UUID userId);
 
-    @GetMapping("/order/{orderId}")
+    @GetMapping("/api/order/{orderId}")
     OrderResponse getOrderById(
             @RequestHeader("X-USER-ID") UUID userId,
             @PathVariable("orderId") UUID orderId);
 
-    @PatchMapping("/orders/{orderId}/paid")
+    @PatchMapping("/api/order/{orderId}/paid")
     void markOrderAsPaid(@PathVariable("orderId") UUID orderId);
 }
-

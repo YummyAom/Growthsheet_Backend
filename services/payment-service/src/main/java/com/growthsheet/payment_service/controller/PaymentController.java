@@ -3,22 +3,18 @@ package com.growthsheet.payment_service.controller;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.growthsheet.payment_service.config.client.OrderClient;
-import com.growthsheet.payment_service.dto.OmiseWebhook;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.service.PaymentService;
+import com.stripe.model.Event;
+import com.stripe.net.Webhook;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,8 +25,10 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderClient orderClient;
-    // private final ObjectMapper objectMapper;
     private final PaymentRepository paymentRepo;
+
+    @Value("${stripe.webhook.secret}")
+    private String endpointSecret;
 
     @GetMapping("/")
     public String getHello() {
@@ -47,8 +45,7 @@ public class PaymentController {
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "checkout_url", checkoutUrl 
-            ));
+                    "checkout_url", checkoutUrl));
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
@@ -65,17 +62,12 @@ public class PaymentController {
 
         try {
             OrderResponse order = orderClient.getOrderById(userId, orderId);
-            Payment payment = paymentRepo.findByOrderId(orderId)
-                    .orElse(null);
-            OrderWithPaymentResponse response = new OrderWithPaymentResponse(order, payment);
-            return ResponseEntity.ok(response);
+            Payment payment = paymentRepo.findByOrderId(orderId).orElse(null);
+            return ResponseEntity.ok(new OrderWithPaymentResponse(order, payment));
 
         } catch (Exception e) {
-
             return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -84,41 +76,42 @@ public class PaymentController {
             @RequestHeader("X-USER-ID") UUID userId) {
 
         try {
-            var orders = orderClient.getPendingOrders(userId);
-
-            return ResponseEntity.ok(orders);
-
+            return ResponseEntity.ok(orderClient.getPendingOrders(userId));
         } catch (Exception e) {
-
             return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    // @PostMapping("/webhook")
-    // public ResponseEntity<?> handleWebhook(
-    // @RequestBody OmiseWebhook webhook) {
+    // ===== Stripe Webhook =====
+    @PostMapping("/webhook")
+    public ResponseEntity<?> handleStripeWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String sigHeader) {
 
-    // try {
+        Event event;
 
-    // if (!"charge.complete".equals(webhook.key())) {
-    // return ResponseEntity.ok().build();
-    // }
+        try {
+            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid signature"));
+        }
 
-    // String chargeId = webhook.data().id();
+        switch (event.getType()) {
 
-    // if (chargeId != null && !chargeId.isBlank()) {
-    // paymentService.processSuccessfulCharge(chargeId);
-    // }
+            case "checkout.session.completed":
+                paymentService.handleCheckoutCompleted(event);
+                break;
 
-    // return ResponseEntity.ok().build();
+            case "checkout.session.expired":
+                paymentService.handleCheckoutExpired(event);
+                break;
 
-    // } catch (Exception e) {
-    // return ResponseEntity.internalServerError()
-    // .body(Map.of("error", e.getMessage()));
-    // }
-    // }
+            default:
+                break;
+        }
 
+        return ResponseEntity.ok(Map.of("received", true));
+    }
 }
