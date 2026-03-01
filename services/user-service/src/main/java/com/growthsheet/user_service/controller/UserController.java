@@ -21,6 +21,7 @@ import com.growthsheet.user_service.dto.requests.UserUpdateProfileRequestDTO;
 import com.growthsheet.user_service.dto.response.UserProfileResponseDTO;
 import com.growthsheet.user_service.entity.User;
 import com.growthsheet.user_service.entity.UserRole;
+import com.growthsheet.user_service.service.FileService;
 import com.growthsheet.user_service.service.UserService;
 
 import jakarta.persistence.Column;
@@ -32,10 +33,12 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
+    private final FileService fileService;
 
-    public UserController(
-            UserService userService) {
+    public UserController(UserService userService,
+            FileService fileService) {
         this.userService = userService;
+        this.fileService = fileService;
     }
 
     @GetMapping("/")
@@ -78,12 +81,14 @@ public class UserController {
         return "Profile updated";
     }
 
-    @PutMapping("/me/photo")
+    @PutMapping(value = "/me/photo", consumes = "multipart/form-data")
     public String updatePhoto(
             @RequestHeader("X-USER-ID") UUID userId,
-            @Valid @RequestBody UpdatePhotoRequestDTO request) {
+            @RequestPart("image") MultipartFile image) {
 
-        userService.updatePhoto(userId, request.getPhotoUrl());
+        String imageUrl = fileService.uploadImage(image);
+        userService.updatePhoto(userId, imageUrl);
+
         return "Photo updated";
     }
 
