@@ -32,6 +32,14 @@ order:
   service: 
     url: ${ORDER_SERVICE_URL}
 
-omise:
-  public_key: ${PKEY_OMISE}
-  secret_key: ${SKEY_OMISE}
+# omise:
+#   public_key: ${PKEY_OMISE}
+#   secret_key: ${SKEY_OMISE}
+
+stripe:
+  public_key: ${PKEY_STRIPE}
+  secret_key: ${SKEY_STRIPE}
+
+growthsheet:
+  frontend:
+    url: growthsheet://payment

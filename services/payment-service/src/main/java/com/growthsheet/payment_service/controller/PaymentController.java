@@ -37,29 +37,26 @@ public class PaymentController {
         return "hello payment";
     }
 
-    // @PostMapping("/create-charge")
-    // public ResponseEntity<?> createCharge(
-    //         @RequestHeader("X-USER-ID") UUID userId,
-    //         @RequestBody ChargeRequest request) { // เปลี่ยนจาก UUID เป็น ChargeRequest
+    @PostMapping("/create-checkout-session/{orderId}")
+    public ResponseEntity<?> createCheckoutSession(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable UUID orderId) {
 
-    //     try {
-    //         // เวลาใช้ต้องดึงค่าออกมาผ่าน request.orderId()
-    //         PromptPayResponse response = paymentService.createNewPromptPayCharge(request.orderId(), userId);
+        try {
+            String checkoutUrl = paymentService.createStripeSession(orderId, userId);
 
-    //         return ResponseEntity.ok(Map.of(
-    //                 "success", true,
-    //                 "charge_id", response.chargeId(),
-    //                 "qr_url", response.qrCodeUrl(),
-    //                 "expires_at", response.expiresAt(),
-    //                 "amount", response.amount()));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "checkout_url", checkoutUrl 
+            ));
 
-    //     } catch (Exception e) {
-    //         return ResponseEntity.internalServerError()
-    //                 .body(Map.of(
-    //                         "success", false,
-    //                         "message", e.getMessage()));
-    //     }
-    // }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage()));
+        }
+    }
 
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<?> getOrderFromOrderService(
@@ -100,28 +97,28 @@ public class PaymentController {
         }
     }
 
-    @PostMapping("/webhook")
-    public ResponseEntity<?> handleWebhook(
-            @RequestBody OmiseWebhook webhook) {
+    // @PostMapping("/webhook")
+    // public ResponseEntity<?> handleWebhook(
+    // @RequestBody OmiseWebhook webhook) {
 
-        try {
+    // try {
 
-            if (!"charge.complete".equals(webhook.key())) {
-                return ResponseEntity.ok().build();
-            }
+    // if (!"charge.complete".equals(webhook.key())) {
+    // return ResponseEntity.ok().build();
+    // }
 
-            String chargeId = webhook.data().id();
+    // String chargeId = webhook.data().id();
 
-            if (chargeId != null && !chargeId.isBlank()) {
-                paymentService.processSuccessfulCharge(chargeId);
-            }
+    // if (chargeId != null && !chargeId.isBlank()) {
+    // paymentService.processSuccessfulCharge(chargeId);
+    // }
 
-            return ResponseEntity.ok().build();
+    // return ResponseEntity.ok().build();
 
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
+    // } catch (Exception e) {
+    // return ResponseEntity.internalServerError()
+    // .body(Map.of("error", e.getMessage()));
+    // }
+    // }
 
 }

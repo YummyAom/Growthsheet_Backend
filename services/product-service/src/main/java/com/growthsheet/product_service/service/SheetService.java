@@ -62,8 +62,7 @@ public class SheetService {
                         ReviewRepository reviewRepo,
                         SheetAssembler sheetAssembler,
                         SheetCardMapper sheetCardMapper,
-                        OrderClient orderClient
-                        ) {
+                        OrderClient orderClient) {
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -77,40 +76,40 @@ public class SheetService {
         }
 
         public List<SheetCardResponse> getPurchasedSheets(UUID userId) {
-    try {
-        // 1. ดึงประวัติการสั่งซื้อ
-        List<OrderResponse> orders = orderClient.getOrdersByUser(userId);
+                try {
+                        // 1. ดึงประวัติการสั่งซื้อ
+                        List<OrderResponse> orders = orderClient.getOrdersByUser(userId);
 
-        // --- ป้องกันค่า Null ---
-        if (orders == null || orders.isEmpty()) {
-            return List.of();
+                        // --- ป้องกันค่า Null ---
+                        if (orders == null || orders.isEmpty()) {
+                                return List.of();
+                        }
+
+                        // 2. กรองข้อมูล (เพิ่มเช็คว่า status และ items ไม่ใช่ null)
+                        Set<UUID> purchasedSheetIds = orders.stream()
+                                        .filter(order -> order != null && "PAID".equals(order.getStatus()))
+                                        .filter(order -> order.getItems() != null) // เช็ค null ป้องกัน error
+                                        .flatMap(order -> order.getItems().stream())
+                                        .map(OrderResponse.Item::getSheetId)
+                                        .collect(Collectors.toSet());
+
+                        if (purchasedSheetIds.isEmpty()) {
+                                return List.of();
+                        }
+
+                        // 3. ดึงข้อมูลจากฐานข้อมูล
+                        List<Sheet> purchasedSheets = sheetRepo.findAllById(purchasedSheetIds);
+
+                        return purchasedSheets.stream()
+                                        .map(this::toSheetCardResponse)
+                                        .toList();
+
+                } catch (Exception e) {
+                        // พิมพ์ Error ออกทางหน้าจอ Console เพื่อให้เรารู้ว่าพังที่บรรทัดไหน
+                        e.printStackTrace();
+                        throw new RuntimeException("เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.getMessage());
+                }
         }
-
-        // 2. กรองข้อมูล (เพิ่มเช็คว่า status และ items ไม่ใช่ null)
-        Set<UUID> purchasedSheetIds = orders.stream()
-                .filter(order -> order != null && "PAID".equals(order.getStatus()))
-                .filter(order -> order.getItems() != null) // เช็ค null ป้องกัน error
-                .flatMap(order -> order.getItems().stream())
-                .map(OrderResponse.Item::getSheetId)
-                .collect(Collectors.toSet());
-
-        if (purchasedSheetIds.isEmpty()) {
-            return List.of();
-        }
-
-        // 3. ดึงข้อมูลจากฐานข้อมูล
-        List<Sheet> purchasedSheets = sheetRepo.findAllById(purchasedSheetIds);
-
-        return purchasedSheets.stream()
-                .map(this::toSheetCardResponse)
-                .toList();
-
-    } catch (Exception e) {
-        // พิมพ์ Error ออกทางหน้าจอ Console เพื่อให้เรารู้ว่าพังที่บรรทัดไหน
-        e.printStackTrace(); 
-        throw new RuntimeException("เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.getMessage());
-    }
-}
 
         @Transactional
         public SheetResponse createSheet(
