@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.growthsheet.product_service.dto.PageResponse;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import com.growthsheet.product_service.dto.CategoryDTO;
 import com.growthsheet.product_service.dto.SellerDTO;
 import com.growthsheet.product_service.dto.UniversityDTO;
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
+import com.growthsheet.product_service.dto.response.DownloadResponse;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
@@ -170,6 +172,12 @@ public class SheetService {
                                                 HttpStatus.NOT_FOUND,
                                                 "Sheet not found"));
 
+                if (!sheet.getIsPublished() || sheet.getStatus() != SheetStatus.APPROVED) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        "Sheet is not available");
+                }
+
                 boolean purchased = orderClient.hasPurchased(userId, sheetId);
 
                 if (!purchased) {
@@ -178,7 +186,45 @@ public class SheetService {
                                         "You have not purchased this sheet");
                 }
 
+                if (sheet.getFileUrl() == null) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                        "File not available");
+                }
+
                 return sheet.getFileUrl();
+        }
+
+        public DownloadResponse getDownloadInfo(UUID sheetId, UUID userId) {
+
+                Sheet sheet = sheetRepo.findById(sheetId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Sheet not found"));
+
+                if (!sheet.getIsPublished() || sheet.getStatus() != SheetStatus.APPROVED) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        "Sheet is not available");
+                }
+
+                boolean purchased = orderClient.hasPurchased(userId, sheetId);
+
+                if (!purchased) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "You have not purchased this sheet");
+                }
+
+                if (sheet.getFileUrl() == null) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                        "File not available");
+                }
+
+                return new DownloadResponse(
+                                sheet.getFileUrl(),
+                                sheet.getTitle());
         }
 
         public Page<SheetCardResponse> getSheets(

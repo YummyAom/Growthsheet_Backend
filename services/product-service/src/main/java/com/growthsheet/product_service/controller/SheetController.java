@@ -1,5 +1,7 @@
 package com.growthsheet.product_service.controller;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
+import com.growthsheet.product_service.dto.response.DownloadResponse;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
+import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetLikeService;
@@ -95,12 +99,12 @@ public class SheetController {
     }
 
     @GetMapping("/{id}/download")
-    public ResponseEntity<String> downloadProduct(
+    public ResponseEntity<DownloadResponse> downloadProduct(
             @PathVariable UUID id,
             @RequestHeader("X-USER-ID") UUID userId) {
 
-        String url = sheetService.getSheetFileUrl(id, userId);
-        return ResponseEntity.ok(url);
+        return ResponseEntity.ok(
+                sheetService.getDownloadInfo(id, userId));
     }
 
     // @GetMapping
