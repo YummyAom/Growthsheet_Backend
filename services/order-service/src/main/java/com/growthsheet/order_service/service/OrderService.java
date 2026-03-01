@@ -36,6 +36,13 @@ public class OrderService {
         this.cartRepo = cartRepo;
     }
 
+    public boolean hasPurchased(UUID userId, UUID sheetId) {
+        return orderRepo.existsByUserIdAndItemsSheetIdAndStatus(
+                userId,
+                sheetId,
+                "PAID");
+    }
+
     public Order checkout(UUID userId, CheckoutRequest req) {
 
         Cart cart = cartRepo.findByUserId(userId)
@@ -149,7 +156,7 @@ public class OrderService {
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (order.getStatus() == "PAID") {
+        if ("PAID".equals(order.getStatus())) {
             return; // กัน update ซ้ำ
         }
 

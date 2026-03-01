@@ -30,7 +30,6 @@ import com.growthsheet.product_service.service.SheetService;
 
 import org.springframework.data.domain.Pageable;
 
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -77,15 +76,32 @@ public class SheetController {
         return ResponseEntity.ok(fileService.uploadFile(file));
     }
 
-    //เรียกดู purchased Order
+    // เรียกดู purchased Order
     @GetMapping("/purchased")
     public PageResponse<SheetCardResponse> getPurchasedSheets(
-        @RequestHeader("X-USER-ID") UUID userId,
-        Pageable pageable) {
+            @RequestHeader("X-USER-ID") UUID userId,
+            Pageable pageable) {
 
         return sheetService.getPurchasedSheets(userId, pageable);
     }
-    
+
+    @GetMapping("/{id}/open")
+    public ResponseEntity<String> openProduct(
+            @PathVariable UUID id,
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        String url = sheetService.getSheetFileUrl(id, userId);
+        return ResponseEntity.ok(url);
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<String> downloadProduct(
+            @PathVariable UUID id,
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        String url = sheetService.getSheetFileUrl(id, userId);
+        return ResponseEntity.ok(url);
+    }
 
     // @GetMapping
     // public ResponseEntity<Page<SheetCardResponse>> getSheets(
