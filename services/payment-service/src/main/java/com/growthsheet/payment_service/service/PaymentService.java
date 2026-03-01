@@ -1,17 +1,9 @@
 package com.growthsheet.payment_service.service;
 
-// import co.omise.Client;
-// import co.omise.models.Charge;
-// import co.omise.models.Source;
-// import co.omise.requests.Request;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.hibernate.SessionCheckMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
