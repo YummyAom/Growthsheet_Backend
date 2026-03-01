@@ -21,6 +21,7 @@ import com.growthsheet.payment_service.dto.PaymentStatus;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.stripe.Stripe;
+import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 
@@ -31,33 +32,37 @@ public class PaymentService {
     private final OrderClient orderClient;
 
     @Value("${growthsheet.frontend.url}")
-    private String frontendUrl; 
+    private String frontendUrl;
 
     public PaymentService(
             OrderClient orderClient,
             PaymentRepository paymentRepository,
             @Value("${stripe.public_key}") String publicKey,
-            @Value("${stripe.secret_key}") String secretKey) throws Exception {
+            @Value("${stripe.secret_key}") String secretKey) {
 
         this.paymentRepository = paymentRepository;
         this.orderClient = orderClient;
         Stripe.apiKey = secretKey;
-
     }
 
     @Transactional
     public String createStripeSession(UUID orderId, UUID userId) throws Exception {
+
         var order = orderClient.getOrderById(userId, orderId);
         if (order == null) {
             throw new RuntimeException("Order not found");
         }
 
-        long amountInCents = order.getTotalPrice().multiply(new BigDecimal(100)).longValue();
+        long amountInCents = order.getTotalPrice()
+                .multiply(new BigDecimal(100))
+                .longValue();
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(frontendUrl + "/payment/success?session_id={CHECKOUT_SESSION_ID}")
+                .setSuccessUrl(frontendUrl + "/payment/success")
                 .setCancelUrl(frontendUrl + "/payment/cancel")
+                .setClientReferenceId(orderId.toString())
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PROMPTPAY)
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setQuantity(1L)
@@ -71,157 +76,86 @@ public class PaymentService {
                                                                 .build())
                                                 .build())
                                 .build())
-                .putMetadata("orderId", orderId.toString()) 
+                .putMetadata("orderId", orderId.toString())
                 .build();
 
         Session session = Session.create(params);
 
-        Payment payment = Payment.builder()
-                .id(UUID.randomUUID())
-                .orderId(orderId)
-                .chargeId(session.getId())
-                .amount(amountInCents)
-                .status(PaymentStatus.PENDING)
-                .build();
+        // กันสร้าง Payment ซ้ำ
+        Optional<Payment> existing = paymentRepository.findByOrderId(orderId);
+        if (existing.isEmpty()) {
+            Payment payment = Payment.builder()
+                    .id(UUID.randomUUID())
+                    .orderId(orderId)
+                    .chargeId(session.getId())
+                    .amount(amountInCents)
+                    .status(PaymentStatus.PENDING)
+                    .build();
 
-        paymentRepository.save(payment);
+            paymentRepository.save(payment);
+        }
 
         return session.getUrl();
     }
 
-    // @Transactional
-    // public PromptPayResponse createNewPromptPayCharge(UUID orderId, UUID userId)
-    // throws Exception {
-    // // ตรวจสอบว่า order มีอยู่จริงผ่าน Feign Client
-    // // ถ้าตรงนี้พ่น 404 ให้เช็คว่าฝั่ง Order Service เปิด Path /order/{id}
-    // ไว้จริงไหม
-    // var order = orderClient.getOrderById(userId, orderId);
-    // if (order == null) {
-    // throw new RuntimeException("Order not found from Order Service");
-    // }
+    // ===== SUCCESS =====
+    @Transactional
+    public void handleCheckoutCompleted(Event event) {
 
-    // BigDecimal amountBaht = order.getTotalPrice();
-    // long amountInSatang =
-    // amountBaht.multiply(BigDecimal.valueOf(100)).longValue();
+        var stripeObject = event.getDataObjectDeserializer()
+                .getObject().orElse(null);
 
-    // // ✅ STEP 1: สร้าง PromptPay Source
-    // Request<Source> sourceRequest =
-    // new Source.CreateRequestBuilder()
-    // .amount(amountInSatang)
-    // .currency("thb")
-    // .type("promptpay")
-    // .build();
+        if (stripeObject == null)
+            return;
 
-    // Source source = omiseClient.sendRequest(sourceRequest);
+        Session session = (Session) stripeObject;
 
-    // // ✅ STEP 2: เอา source.id ไปสร้าง Charge
-    // Request<Charge> chargeRequest =
-    // new Charge.CreateRequestBuilder()
-    // .amount(amountInSatang)
-    // .currency("thb")
-    // .source(source.getId())
-    // .build();
+        String orderIdStr = session.getMetadata().get("orderId");
+        if (orderIdStr == null)
+            return;
 
-    // Charge charge = omiseClient.sendRequest(chargeRequest);
+        UUID orderId = UUID.fromString(orderIdStr);
 
-    // // ✅ STEP 3: Save DB
-    // Payment payment = Payment.builder()
-    // .id(UUID.randomUUID())
-    // .orderId(orderId)
-    // .chargeId(charge.getId())
-    // .amount(amountInSatang)
-    // .status(PaymentStatus.PENDING)
-    // .build();
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+        if (payment == null)
+            return;
 
-    // paymentRepository.save(payment);
+        // กัน webhook ยิงซ้ำ
+        if (payment.getStatus() == PaymentStatus.PAID)
+            return;
 
-    // // ✅ STEP 4: ดึง QR Code URL
-    // // ระวัง: ต้องเช็ค ScannableCode ว่ามีค่าไหมป้องกัน Null
-    // String qrCodeUrl = "";
-    // if (source.getScannableCode() != null && source.getScannableCode().getImage()
-    // != null) {
-    // qrCodeUrl = source.getScannableCode().getImage().getDownloadUri();
-    // }
+        payment.setStatus(PaymentStatus.PAID);
+        paymentRepository.save(payment);
 
-    // // แก้ไขจุดที่พิมพ์ผิด: .getExpiresAt ต้องมี ()
-    // LocalDateTime expiresAt = LocalDateTime.ofInstant(
-    // java.time.Instant.ofEpochMilli(source.getExpiresAt().getMillis()),
-    // ZoneId.systemDefault());
+        orderClient.markOrderAsPaid(orderId);
+    }
 
-    // return new PromptPayResponse(
-    // charge.getId(),
-    // qrCodeUrl,
-    // expiresAt,
-    // amountBaht);
-    // }
+    // ===== EXPIRED / FAILED =====
+    @Transactional
+    public void handleCheckoutExpired(Event event) {
 
-    // @Transactional
-    // public PromptPayResponse getOrRefreshPromptPay(UUID orderId, UUID userId)
-    // throws Exception {
-    // Optional<Payment> existing =
-    // paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING);
+        var stripeObject = event.getDataObjectDeserializer()
+                .getObject().orElse(null);
 
-    // if (existing.isPresent()) {
-    // Charge charge = omiseClient.sendRequest(
-    // new Charge.GetRequestBuilder(existing.get().getChargeId()).build());
+        if (stripeObject == null)
+            return;
 
-    // // ตรวจสอบสถานะถ้ายังไม่จ่ายและไม่หมดอายุให้คืนค่าเดิม
-    // if (!charge.isExpired() && !charge.isPaid()) {
-    // Source source = charge.getSource();
+        Session session = (Session) stripeObject;
 
-    // String qrCodeUrl = (source.getScannableCode() != null)
-    // ? source.getScannableCode().getImage().getDownloadUri()
-    // : "";
+        String orderIdStr = session.getMetadata().get("orderId");
+        if (orderIdStr == null)
+            return;
 
-    // LocalDateTime expiresAt = LocalDateTime.ofInstant(
-    // java.time.Instant.ofEpochMilli(source.getAmount().getMillis()),
-    // ZoneId.systemDefault());
+        UUID orderId = UUID.fromString(orderIdStr);
 
-    // BigDecimal amountBaht = BigDecimal.valueOf(charge.getAmount())
-    // .divide(BigDecimal.valueOf(100));
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+        if (payment == null)
+            return;
 
-    // return new PromptPayResponse(
-    // charge.getId(),
-    // qrCodeUrl,
-    // expiresAt,
-    // amountBaht);
-    // }
+        if (payment.getStatus() == PaymentStatus.PAID)
+            return;
 
-    // // ถ้าสถานะเปลี่ยนไปแล้วให้ Update DB
-    // if (charge.isPaid()) {
-    // existing.get().setStatus(PaymentStatus.PAID);
-    // paymentRepository.save(existing.get());
-    // } else if (charge.isExpired()) {
-    // existing.get().setStatus(PaymentStatus.PENDING);
-    // paymentRepository.save(existing.get());
-    // }
-    // }
-
-    // // ถ้าไม่มีของเดิม หรือของเดิมใช้ไม่ได้แล้ว ให้สร้างใหม่
-    // return createNewPromptPayCharge(orderId, userId);
-    // }
-
-    // @Transactional
-    // public void processSuccessfulCharge(String chargeId) throws Exception {
-    // Charge charge = omiseClient.sendRequest(
-    // new Charge.GetRequestBuilder(chargeId).build());
-
-    // if (!charge.isPaid()) {
-    // return;
-    // }
-
-    // Payment payment = paymentRepository.findByChargeId(chargeId)
-    // .orElseThrow(() -> new RuntimeException("Payment record not found in database
-    // for charge: " + chargeId));
-
-    // if (payment.getStatus() == PaymentStatus.PAID) {
-    // return;
-    // }
-
-    // payment.setStatus(PaymentStatus.PAID);
-    // paymentRepository.save(payment);
-
-    // // แจ้งฝั่ง Order ว่าจ่ายเงินแล้ว
-    // orderClient.markOrderAsPaid(payment.getOrderId());
-    // }
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentRepository.save(payment);
+    }
 }
