@@ -1,5 +1,7 @@
 package com.growthsheet.product_service.controller;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,16 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
+import com.growthsheet.product_service.dto.response.DownloadResponse;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
+import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetLikeService;
 import com.growthsheet.product_service.service.SheetService;
 
 import org.springframework.data.domain.Pageable;
-
 
 import jakarta.validation.Valid;
 
@@ -77,15 +80,32 @@ public class SheetController {
         return ResponseEntity.ok(fileService.uploadFile(file));
     }
 
-    //เรียกดู purchased Order
+    // เรียกดู purchased Order
     @GetMapping("/purchased")
     public PageResponse<SheetCardResponse> getPurchasedSheets(
-        @RequestHeader("X-USER-ID") UUID userId,
-        Pageable pageable) {
+            @RequestHeader("X-USER-ID") UUID userId,
+            Pageable pageable) {
 
         return sheetService.getPurchasedSheets(userId, pageable);
     }
-    
+
+    @GetMapping("/{id}/open")
+    public ResponseEntity<String> openProduct(
+            @PathVariable UUID id,
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        String url = sheetService.getSheetFileUrl(id, userId);
+        return ResponseEntity.ok(url);
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<DownloadResponse> downloadProduct(
+            @PathVariable UUID id,
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        return ResponseEntity.ok(
+                sheetService.getDownloadInfo(id, userId));
+    }
 
     // @GetMapping
     // public ResponseEntity<Page<SheetCardResponse>> getSheets(
