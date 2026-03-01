@@ -36,9 +36,12 @@ order:
 #   public_key: ${PKEY_OMISE}
 #   secret_key: ${SKEY_OMISE}
 
+
 stripe:
   public_key: ${PKEY_STRIPE}
   secret_key: ${SKEY_STRIPE}
+  webhook: 
+    secret: ${ENDPOINT_SECRET_STRIPE}
 
 growthsheet:
   frontend:
