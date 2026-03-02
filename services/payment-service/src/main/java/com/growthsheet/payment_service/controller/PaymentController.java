@@ -104,14 +104,18 @@ public class PaymentController {
                 paymentService.handleCheckoutCompleted(event);
                 break;
 
-            case "checkout.session.expired":
+            case "checkout.session.async_payment_succeeded":
+                paymentService.handleCheckoutCompleted(event);
+                break;
+
+            case "checkout.session.async_payment_failed":
                 paymentService.handleCheckoutExpired(event);
                 break;
 
-            default:
+            case "checkout.session.expired":
+                paymentService.handleCheckoutExpired(event);
                 break;
         }
-
         return ResponseEntity.ok(Map.of("received", true));
     }
 }
