@@ -44,3 +44,9 @@ stripe:
   mobile:
     success-url: ${SUCCESS_URL}
     cancel-url: ${CANCEL_URL}
+
+feign:
+  okhttp:
+    enabled: true
+  httpclient:
+    enabled: false
