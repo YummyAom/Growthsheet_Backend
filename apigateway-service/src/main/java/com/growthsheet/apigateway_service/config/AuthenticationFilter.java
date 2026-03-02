@@ -24,76 +24,66 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         this.redisTemplate = redisTemplate;
     }
 
-    public static class Config {
-    }
+    public static class Config { }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-
-            String path = exchange.getRequest().getPath().toString();
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            String path = exchange.getRequest().getPath().toString();
 
-            // 1️⃣ เช็ค Authorization header
+            // 1. ตรวจสอบ Header
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Unauthorized", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String accessToken = authHeader.substring(7);
             String redisKey = "access_token:" + accessToken;
 
-            // 2️⃣ เช็ค session ใน Redis
+            // 2. ดึงข้อมูลจาก Redis แบบ Hash
             return redisTemplate.opsForHash().entries(redisKey)
-                    .collectMap(
-                            entry -> entry.getKey().toString(),
-                            Map.Entry::getValue
-                    )
+                    .collectMap(ev -> ev.getKey().toString(), ev -> ev.getValue())
                     .flatMap(sessionData -> {
-
-                        if (sessionData.isEmpty()) {
-                            return onError(exchange, "Session not found", HttpStatus.UNAUTHORIZED);
+                        // เช็คว่าเจอ Session ไหม
+                        if (sessionData == null || sessionData.isEmpty()) {
+                            return Mono.error(new RuntimeException("SESSION_NOT_FOUND"));
                         }
 
-                        Object userIdObj = sessionData.get("user_id");
-                        Object roleObj = sessionData.get("role");
+                        // ดึง userId และ role (ใช้ String.valueOf ป้องกัน ClassCastException)
+                        String userId = String.valueOf(sessionData.get("user_id"));
+                        String role = String.valueOf(sessionData.get("role"));
 
-                        if (userIdObj == null || roleObj == null) {
-                            return onError(exchange, "Invalid session data", HttpStatus.UNAUTHORIZED);
-                        }
-
-                        String userId = userIdObj.toString();
-                        String role = roleObj.toString();
-
-                        // 3️⃣ 🔐 เช็คเฉพาะ /admin/**
-                        if (path.startsWith("/admin/") || path.equals("/admin")) {
+                        // 3. 🔐 ตรวจสอบสิทธิ์ Admin (ถ้าเข้า Path /admin หรือ /api/admin)
+                        if (path.contains("/admin")) {
                             if (!"ADMIN".equals(role)) {
-                                return onError(exchange, "Admin access only", HttpStatus.FORBIDDEN);
+                                System.out.println("LOG: Access Denied for User " + userId + " (Role: " + role + ")");
+                                return onError(exchange, "Forbidden: Admin Access Only", HttpStatus.FORBIDDEN);
                             }
                         }
 
-                        // 4️⃣ ส่ง header ต่อไปยัง downstream service
-                        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                        // 4. ส่งต่อข้อมูลไป Downstream Services
+                        ServerHttpRequest request = exchange.getRequest().mutate()
                                 .header("X-USER-ID", userId)
                                 .header("X-USER-ROLE", role)
                                 .build();
 
-                        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                        return chain.filter(exchange.mutate().request(request).build());
                     })
-                    .switchIfEmpty(onError(exchange, "Session not found", HttpStatus.UNAUTHORIZED))
-                    .onErrorResume(e -> onError(exchange, "Unauthorized", HttpStatus.UNAUTHORIZED));
+                    .onErrorResume(err -> {
+                        String errMsg = err.getMessage();
+                        if ("SESSION_NOT_FOUND".equals(errMsg)) {
+                            return onError(exchange, "Session expired or not found", HttpStatus.UNAUTHORIZED);
+                        }
+                        return onError(exchange, "Unauthorized: " + errMsg, HttpStatus.UNAUTHORIZED);
+                    });
         };
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
+    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus status) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(status);
         response.getHeaders().setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-
-        String body = String.format("{\"error\":\"%s\",\"status\":%d}", message, status.value());
-        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-
-        return response.writeWith(Mono.fromSupplier(() ->
-                response.bufferFactory().wrap(bytes)
-        ));
+        String body = String.format("{\"error\": \"%s\", \"status\": %d}", err, status.value());
+        return response.writeWith(Mono.just(response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8))));
     }
 }
