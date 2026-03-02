@@ -90,7 +90,7 @@ public class PaymentController {
             @RequestHeader("Stripe-Signature") String sigHeader) {
 
         Event event;
-
+        System.out.print("Hello");
         try {
             event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
         } catch (Exception e) {
@@ -101,6 +101,7 @@ public class PaymentController {
         switch (event.getType()) {
 
             case "checkout.session.completed":
+                System.out.print("ok");
                 paymentService.handleCheckoutCompleted(event);
                 break;
 
