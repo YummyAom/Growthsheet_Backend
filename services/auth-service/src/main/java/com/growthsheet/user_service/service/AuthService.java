@@ -157,20 +157,64 @@ public class AuthService {
 
         public Mono<Map<String, Object>> adminLogin(LoginRequest req) {
 
-                return login(req)
-                                .flatMap(response -> {
+                // 1. หา user
+                User user = userRepo.findByEmail(req.email())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.UNAUTHORIZED,
+                                                "Email หรือ password ไม่ถูกต้อง"));
 
-                                        String role = (String) response.get("role");
+                // 2. เช็ค password
+                if (!passwordUtil.matches(req.password(), user.getPassword())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.UNAUTHORIZED,
+                                        "Email หรือ password ไม่ถูกต้อง");
+                }
 
-                                        if (!"ADMIN".equals(role)) {
-                                                return Mono.error(
-                                                                new ResponseStatusException(
-                                                                                HttpStatus.FORBIDDEN,
-                                                                                "Admin access only"));
-                                        }
+                // 3. เช็คว่าเป็น ADMIN จริงไหม
+                if (user.getRole() != UserRole.ADMIN) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "Admin access only");
+                }
 
-                                        return Mono.just(response);
-                                });
+                // 4. ถ้าต้องการให้ admin ข้าม OTP ให้ลบบล็อกนี้ออก
+
+
+                // 5. สร้าง token
+                String accessToken = UUID.randomUUID().toString();
+                String redisKey = "access_token:" + accessToken;
+
+                String sessionToken = Jwts.builder()
+                                .subject(user.getId().toString())
+                                .claim("user_id", user.getId().toString())
+                                .claim("user_name", user.getName())
+                                .claim("email", user.getEmail())
+                                .claim("role", user.getRole().name())
+                                .issuedAt(new Date())
+                                .expiration(new Date(System.currentTimeMillis() + this.jwtExpMs))
+                                .signWith(this.secretKey)
+                                .compact();
+
+                String refreshToken = UUID.randomUUID().toString();
+                String refreshKey = "refresh_token:" + refreshToken;
+
+                Map<String, Object> session = Map.of(
+                                "user_id", user.getId().toString(),
+                                "user_name", user.getName(),
+                                "email", user.getEmail(),
+                                "role", user.getRole().name(),
+                                "status", "ACTIVE");
+
+                return redis.opsForHash()
+                                .putAll(redisKey, session)
+                                .then(redis.expire(redisKey, TOKEN_TTL))
+                                .then(redis.opsForValue().set(refreshKey, user.getEmail(), Duration.ofDays(7)))
+                                .thenReturn(Map.of(
+                                                "access_token", accessToken,
+                                                "token_type", "bearer",
+                                                "expires_in", TOKEN_TTL.getSeconds(),
+                                                "session_token", sessionToken,
+                                                "refresh_token", refreshToken));
         }
 
         public void verifyOtp(String email, String otp) {
