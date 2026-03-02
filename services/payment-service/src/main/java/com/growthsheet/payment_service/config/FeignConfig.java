@@ -18,8 +18,7 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return template -> {
-            ServletRequestAttributes attrs =
-                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             String authHeader = null;
 
@@ -29,10 +28,12 @@ public class FeignConfig {
             }
 
             if (authHeader != null) {
+                System.out.println("Feign using USER Authorization: " + authHeader);
                 template.header("Authorization", authHeader);
-            }
-            else {
-                template.header("Authorization", "Bearer " + serviceToken);
+            } else {
+                String internalAuth = "Bearer " + serviceToken;
+                System.out.println("Feign using SERVICE Authorization: " + internalAuth);
+                template.header("Authorization", internalAuth);
             }
         };
     }
