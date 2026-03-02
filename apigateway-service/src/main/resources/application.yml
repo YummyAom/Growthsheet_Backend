@@ -17,7 +17,9 @@ spring:
       globalcors:
         corsConfigurations:
           "[/**]":
-            allowedOriginPatterns: "*"
+            allowedOriginPatterns:
+              - http://localhost:3000
+              - http://localhost:9000
             allowedMethods:
               - GET
               - POST
@@ -25,7 +27,7 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
-            allowCredentials: false
+            allowCredentials: true
       routes:
         - id: auth-service
           uri: ${AUTH_SERVICE_URL}
