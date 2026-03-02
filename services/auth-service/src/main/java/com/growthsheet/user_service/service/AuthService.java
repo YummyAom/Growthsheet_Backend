@@ -76,19 +76,19 @@ public class AuthService {
                     "password และ secPassword ไม่ตรงกัน");
         }
 
-        if (existing.isPresent()) {
-            User user = existing.get();
+        // if (existing.isPresent()) {
+        //     User user = existing.get();
 
-            if (user.isEnabled()) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Email already exists");
+        //     if (user.isEnabled()) {
+        //         throw new ResponseStatusException(
+        //                 HttpStatus.CONFLICT,
+        //                 "Email already exists");
 
-            }
+        //     }
 
-            otpService.sendOtp(user.getEmail());
-            return buildResponse(user);
-        }
+        //     otpService.sendOtp(user.getEmail());
+        //     return buildResponse(user);
+        // }
 
         // case 3: new Email
         User user = new User();
@@ -112,9 +112,9 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email หรือ password ไม่ถูกต้อง");
         }
 
-        if (!user.isEnabled()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "กรุณายืนยัน OTP ก่อนเข้าสู่ระบบ");
-        }
+        // if (!user.isEnabled()) {
+        //     throw new ResponseStatusException(HttpStatus.FORBIDDEN, "กรุณายืนยัน OTP ก่อนเข้าสู่ระบบ");
+        // }
 
         String accessToken = UUID.randomUUID().toString();
         String redisKey = "access_token:" + accessToken;

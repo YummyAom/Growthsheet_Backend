@@ -44,7 +44,8 @@ public class PaymentService {
     public String createStripeSession(UUID orderId, UUID userId) throws Exception {
 
         var order = orderClient.getOrderById(userId, orderId);
-        if (order == null) {
+        System.out.print(orderId);
+        if (order == null) {    
             throw new RuntimeException("Order not found");
         }
 
