@@ -22,27 +22,25 @@ jwt:
 
 user:
   service:
-    url: ${AUTH_SERVICE_URL} 
+    url: ${AUTH_SERVICE_URL}
 
 product:
   service:
     url: ${PRODUCT_SERVICE_URL}
 
 order:
-  service: 
+  service:
     url: ${ORDER_SERVICE_URL}
 
 # omise:
 #   public_key: ${PKEY_OMISE}
 #   secret_key: ${SKEY_OMISE}
 
-
 stripe:
   public_key: ${PKEY_STRIPE}
   secret_key: ${SKEY_STRIPE}
-  webhook: 
+  webhook:
     secret: ${ENDPOINT_SECRET_STRIPE}
-
-growthsheet:
-  frontend:
-    url: growthsheet://payment
+  mobile:
+    success-url: ${SUCCESS_URL}
+    cancel-url: ${CANCEL_URL}

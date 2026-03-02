@@ -23,8 +23,11 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
 
-    @Value("${growthsheet.frontend.url}")
-    private String frontendUrl;
+    @Value("${stripe.mobile.success-url}")
+    private String successUrl;
+
+    @Value("${stripe.mobile.cancel-url}")
+    private String cancelUrl;
 
     public PaymentService(
             OrderClient orderClient,
@@ -51,8 +54,8 @@ public class PaymentService {
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(frontendUrl + "/payment/success")
-                .setCancelUrl(frontendUrl + "/payment/cancel")
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
                 .setClientReferenceId(orderId.toString())
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PROMPTPAY)
                 .addLineItem(
@@ -73,7 +76,6 @@ public class PaymentService {
 
         Session session = Session.create(params);
 
-        // กันสร้าง Payment ซ้ำ
         Optional<Payment> existing = paymentRepository.findByOrderId(orderId);
         if (existing.isEmpty()) {
             Payment payment = Payment.builder()
@@ -112,7 +114,6 @@ public class PaymentService {
         if (payment == null)
             return;
 
-        // กัน webhook ยิงซ้ำ
         if (payment.getStatus() == PaymentStatus.PAID)
             return;
 
