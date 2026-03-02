@@ -13,6 +13,8 @@ spring:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:2}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
