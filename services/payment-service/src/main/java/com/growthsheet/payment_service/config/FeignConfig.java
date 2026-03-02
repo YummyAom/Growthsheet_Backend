@@ -20,21 +20,21 @@ public class FeignConfig {
         return template -> {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
-            String authHeader = null;
-
             if (attrs != null) {
                 HttpServletRequest request = attrs.getRequest();
-                authHeader = request.getHeader("Authorization");
+                String authHeader = request.getHeader("Authorization");
+
+                // ถ้ามี user → ใช้ user
+                if (authHeader != null) {
+                    System.out.println("Feign using USER Authorization: " + authHeader);
+                    template.header("Authorization", authHeader);
+                    return;
+                }
             }
 
-            if (authHeader != null) {
-                System.out.println("Feign using USER Authorization: " + authHeader);
-                template.header("Authorization", authHeader);
-            } else {
-                String internalAuth = "Bearer " + serviceToken;
-                System.out.println("Feign using SERVICE Authorization: " + internalAuth);
-                template.header("Authorization", internalAuth);
-            }
+            // ไม่มี user → ใช้ internal
+            System.out.println("Feign using INTERNAL token");
+            template.header("X-INTERNAL-TOKEN", serviceToken);
         };
     }
 }
