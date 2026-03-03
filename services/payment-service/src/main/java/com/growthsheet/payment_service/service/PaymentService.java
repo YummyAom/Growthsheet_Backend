@@ -45,7 +45,7 @@ public class PaymentService {
 
         var order = orderClient.getOrderById(userId, orderId);
         System.out.print(orderId);
-        if (order == null) {    
+        if (order == null) {
             throw new RuntimeException("Order not found");
         }
 
@@ -55,7 +55,7 @@ public class PaymentService {
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(successUrl)
+                .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
                 .setCancelUrl(cancelUrl)
                 .setClientReferenceId(orderId.toString())
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PROMPTPAY)
@@ -74,7 +74,6 @@ public class PaymentService {
                                 .build())
                 .putMetadata("orderId", orderId.toString())
                 .build();
-
         Session session = Session.create(params);
 
         Optional<Payment> existing = paymentRepository.findByOrderId(orderId);
