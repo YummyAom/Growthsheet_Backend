@@ -9,7 +9,6 @@ import com.growthsheet.product_service.config.client.OrderClient;
 import com.growthsheet.product_service.config.client.UserClient;
 import com.growthsheet.product_service.dto.UserDTO;
 import com.growthsheet.product_service.dto.UserProfileResponse;
-import com.growthsheet.product_service.dto.client.OrderResponse;
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
 import com.growthsheet.product_service.dto.response.ReviewResponse;
 import com.growthsheet.product_service.entity.SheetReview;
