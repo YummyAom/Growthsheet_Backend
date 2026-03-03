@@ -71,6 +71,21 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/order/{orderId}/status")
+    public ResponseEntity<?> getPaymentStatus(
+            @PathVariable UUID orderId) {
+
+        Payment payment = paymentRepo.findByOrderId(orderId)
+                .orElse(null);
+
+        if (payment == null) {
+            return ResponseEntity.ok(Map.of("status", "NOT_FOUND"));
+        }
+
+        return ResponseEntity.ok(
+                Map.of("status", payment.getStatus()));
+    }
+
     @GetMapping("/orders/pending")
     public ResponseEntity<?> getPendingOrdersFromOrderService(
             @RequestHeader("X-USER-ID") UUID userId) {
