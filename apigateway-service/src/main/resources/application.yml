@@ -90,6 +90,25 @@ spring:
           filters:
             - AuthenticationFilter
             - PrefixPath=/api
+        # =========================
+        # Notification REST
+        # =========================
+        - id: notification-service
+          uri: http://notification-service:8081
+          predicates:
+            - Path=/notifications/**
+          filters:
+            - AuthenticationFilter
+            - PrefixPath=/api
+        # =========================
+        # Notification WebSocket
+        # =========================
+        - id: notifications-ws
+          uri: ${NOTIFICATION_SERVICE_WS_URL}
+          predicates:
+            - Path=/ws/**
+          filters:
+            - AuthenticationFilter
 
 logging:
   level:
