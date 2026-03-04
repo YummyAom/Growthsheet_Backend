@@ -85,10 +85,31 @@ public class SheetService {
 
                 PageResponse<OrderResponse> orderPage = orderClient.getPaidOrders(userId, pageable);
 
+                if (orderPage == null || orderPage.getContent() == null || orderPage.getContent().isEmpty()) {
+                        return new PageResponse<>(
+                                        List.of(),
+                                        pageable.getPageNumber(),
+                                        pageable.getPageSize(),
+                                        0,
+                                        0,
+                                        true);
+                }
+
                 Set<UUID> sheetIds = orderPage.getContent().stream()
+                                .filter(order -> order.getItems() != null)
                                 .flatMap(order -> order.getItems().stream())
                                 .map(OrderResponse.Item::getSheetId)
                                 .collect(Collectors.toSet());
+
+                if (sheetIds.isEmpty()) {
+                        return new PageResponse<>(
+                                        List.of(),
+                                        orderPage.getPage(),
+                                        orderPage.getSize(),
+                                        orderPage.getTotalElements(),
+                                        orderPage.getTotalPages(),
+                                        orderPage.isLast());
+                }
 
                 List<Sheet> sheets = sheetRepo.findAllById(sheetIds);
 

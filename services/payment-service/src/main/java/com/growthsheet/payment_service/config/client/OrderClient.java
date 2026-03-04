@@ -9,9 +9,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import com.growthsheet.payment_service.config.FeignOkHttpConfig;
 import com.growthsheet.payment_service.dto.OrderResponse;
 
-@FeignClient(name = "order-service", url = "${GATEWAY_SERVICE_URL}")
+@FeignClient(
+        name = "order-service", 
+        url = "${GATEWAY_SERVICE_URL}",
+        configuration = FeignOkHttpConfig.class
+)
 public interface OrderClient {
 
     @GetMapping("/order/pending")
@@ -23,7 +28,6 @@ public interface OrderClient {
             @RequestHeader("X-USER-ID") UUID userId,
             @PathVariable("orderId") UUID orderId);
 
-    @PatchMapping("/orders/{orderId}/paid")
+    @PatchMapping("/order/{orderId}/paid")
     void markOrderAsPaid(@PathVariable("orderId") UUID orderId);
 }
-

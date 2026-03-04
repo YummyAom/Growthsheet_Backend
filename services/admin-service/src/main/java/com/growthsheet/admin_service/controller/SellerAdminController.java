@@ -74,17 +74,16 @@ public class SellerAdminController {
                 adminId);
     }
 
-@PutMapping("/seller-applications/{userId}/reject")
-public SellerReviewResponse rejectSeller(
-        @PathVariable UUID userId,
-        @RequestBody SellerReviewRequest request,
-        @RequestHeader("X-USER-ID") UUID adminId) {
+    @PutMapping("/seller-applications/{userId}/reject")
+    public SellerReviewResponse rejectSeller(
+            @PathVariable UUID userId,
+            @RequestBody SellerReviewRequest request,
+            @RequestHeader("X-USER-ID") UUID adminId) {
 
-    return sellerAdminService.reviewSeller(
-            userId,
-            SellerStatus.REJECTED,
-            request.getComment(),
-            adminId
-    );
-}
+        return sellerAdminService.reviewSeller(
+                userId,
+                SellerStatus.REJECTED,
+                request.getComment(),
+                adminId);
+    }
 }

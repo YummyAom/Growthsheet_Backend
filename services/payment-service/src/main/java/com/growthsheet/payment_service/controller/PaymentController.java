@@ -3,22 +3,18 @@ package com.growthsheet.payment_service.controller;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.growthsheet.payment_service.config.client.OrderClient;
-import com.growthsheet.payment_service.dto.OmiseWebhook;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.service.PaymentService;
+import com.stripe.model.Event;
+import com.stripe.net.Webhook;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,37 +25,35 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderClient orderClient;
-    // private final ObjectMapper objectMapper;
     private final PaymentRepository paymentRepo;
+
+    @Value("${stripe.webhook.secret}")
+    private String endpointSecret;
 
     @GetMapping("/")
     public String getHello() {
         return "hello payment";
     }
 
-    // @PostMapping("/create-charge")
-    // public ResponseEntity<?> createCharge(
-    //         @RequestHeader("X-USER-ID") UUID userId,
-    //         @RequestBody ChargeRequest request) { // เปลี่ยนจาก UUID เป็น ChargeRequest
+    @PostMapping("/create-checkout-session/{orderId}")
+    public ResponseEntity<?> createCheckoutSession(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable UUID orderId) {
 
-    //     try {
-    //         // เวลาใช้ต้องดึงค่าออกมาผ่าน request.orderId()
-    //         PromptPayResponse response = paymentService.createNewPromptPayCharge(request.orderId(), userId);
+        try {
+            String checkoutUrl = paymentService.createStripeSession(orderId, userId);
 
-    //         return ResponseEntity.ok(Map.of(
-    //                 "success", true,
-    //                 "charge_id", response.chargeId(),
-    //                 "qr_url", response.qrCodeUrl(),
-    //                 "expires_at", response.expiresAt(),
-    //                 "amount", response.amount()));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "checkout_url", checkoutUrl));
 
-    //     } catch (Exception e) {
-    //         return ResponseEntity.internalServerError()
-    //                 .body(Map.of(
-    //                         "success", false,
-    //                         "message", e.getMessage()));
-    //     }
-    // }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage()));
+        }
+    }
 
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<?> getOrderFromOrderService(
@@ -68,18 +62,28 @@ public class PaymentController {
 
         try {
             OrderResponse order = orderClient.getOrderById(userId, orderId);
-            Payment payment = paymentRepo.findByOrderId(orderId)
-                    .orElse(null);
-            OrderWithPaymentResponse response = new OrderWithPaymentResponse(order, payment);
-            return ResponseEntity.ok(response);
+            Payment payment = paymentRepo.findByOrderId(orderId).orElse(null);
+            return ResponseEntity.ok(new OrderWithPaymentResponse(order, payment));
 
         } catch (Exception e) {
-
             return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    @GetMapping("/order/{orderId}/status")
+    public ResponseEntity<?> getPaymentStatus(
+            @PathVariable UUID orderId) {
+
+        Payment payment = paymentRepo.findByOrderId(orderId)
+                .orElse(null);
+
+        if (payment == null) {
+            return ResponseEntity.ok(Map.of("status", "NOT_FOUND"));
+        }
+
+        return ResponseEntity.ok(
+                Map.of("status", payment.getStatus()));
     }
 
     @GetMapping("/orders/pending")
@@ -87,41 +91,47 @@ public class PaymentController {
             @RequestHeader("X-USER-ID") UUID userId) {
 
         try {
-            var orders = orderClient.getPendingOrders(userId);
-
-            return ResponseEntity.ok(orders);
-
+            return ResponseEntity.ok(orderClient.getPendingOrders(userId));
         } catch (Exception e) {
-
             return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
+    // ===== Stripe Webhook =====
     @PostMapping("/webhook")
-    public ResponseEntity<?> handleWebhook(
-            @RequestBody OmiseWebhook webhook) {
+    public ResponseEntity<?> handleStripeWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String sigHeader) {
 
+        Event event;
+        System.out.print("Hello");
         try {
-
-            if (!"charge.complete".equals(webhook.key())) {
-                return ResponseEntity.ok().build();
-            }
-
-            String chargeId = webhook.data().id();
-
-            if (chargeId != null && !chargeId.isBlank()) {
-                paymentService.processSuccessfulCharge(chargeId);
-            }
-
-            return ResponseEntity.ok().build();
-
+            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid signature"));
         }
-    }
 
+        switch (event.getType()) {
+
+            case "checkout.session.completed":
+                System.out.print("ok");
+                paymentService.handleCheckoutCompleted(event);
+                break;
+
+            case "checkout.session.async_payment_succeeded":
+                paymentService.handleCheckoutCompleted(event);
+                break;
+
+            case "checkout.session.async_payment_failed":
+                paymentService.handleCheckoutExpired(event);
+                break;
+
+            case "checkout.session.expired":
+                paymentService.handleCheckoutExpired(event);
+                break;
+        }
+        return ResponseEntity.ok(Map.of("received", true));
+    }
 }

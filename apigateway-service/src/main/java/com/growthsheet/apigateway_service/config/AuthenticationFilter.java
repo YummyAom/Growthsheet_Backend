@@ -1,5 +1,6 @@
 package com.growthsheet.apigateway_service.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -16,7 +17,9 @@ import java.util.Map;
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
-
+    @Value("${SERVICE_TOKEN}")
+    private String serviceToken;
+    
     private final ReactiveRedisTemplate<String, Object> redisTemplate;
 
     public AuthenticationFilter(ReactiveRedisTemplate<String, Object> redisTemplate) {
@@ -29,10 +32,33 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            String path = exchange.getRequest().getPath().toString();
 
-            // 1. ตรวจสอบ Header
+            String path = exchange.getRequest().getPath().toString();
+            System.out.println("DEBUG [1]: Incoming request to path: " + path);
+
+            // ===============================
+            // 1) CHECK INTERNAL SERVICE TOKEN
+            // ===============================
+            String internalToken = exchange.getRequest()
+                    .getHeaders()
+                    .getFirst("X-INTERNAL-TOKEN");
+
+            if (internalToken != null && internalToken.equals(serviceToken)) {
+                System.out.println("DEBUG [INTERNAL]: Internal service call allowed");
+
+                ServerHttpRequest request = exchange.getRequest().mutate()
+                        .header("X-USER-ID", "system")
+                        .header("X-USER-ROLE", "SYSTEM")
+                        .build();
+
+                return chain.filter(exchange.mutate().request(request).build());
+            }
+
+            // ===============================
+            // 2) USER AUTH (REDIS)
+            // ===============================
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
@@ -43,6 +69,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             // 2. ดึงข้อมูลจาก Redis แบบ Hash
             return redisTemplate.opsForHash().entries(redisKey)
                     .collectMap(ev -> ev.getKey().toString(), ev -> ev.getValue())
+                    .doOnNext(data -> System.out.println("DEBUG [3]: Data found in Redis -> " + data))
+                    .switchIfEmpty(Mono.defer(() -> {
+                        System.out.println("DEBUG [Error]: Key not found in Redis or Session expired");
+                        return Mono.error(new RuntimeException("SESSION_NOT_FOUND"));
+                    }))
                     .flatMap(sessionData -> {
                         // เช็คว่าเจอ Session ไหม
                         if (sessionData == null || sessionData.isEmpty()) {
