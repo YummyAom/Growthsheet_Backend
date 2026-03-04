@@ -61,6 +61,13 @@ public class AuthController {
         return authService.login(req);
     }
 
+    @PostMapping("/admin-login")
+    public Mono<Map<String, Object>> adminLogin(
+            @Valid @RequestBody LoginRequest req) {
+
+        return authService.adminLogin(req);
+    }
+
     @PostMapping("/logout")
     public Mono<ResponseEntity<Map<String, String>>> logout(
             @RequestHeader("Authorization") String authHeader,
@@ -92,5 +99,4 @@ public class AuthController {
                 "message", "OTP verified successfully");
     }
 
-    
 }
