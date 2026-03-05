@@ -20,6 +20,7 @@ spring:
             allowedOriginPatterns:
               - http://localhost:3000
               - http://localhost:9000
+              - "*"
             allowedMethods:
               - GET
               - POST
@@ -94,7 +95,7 @@ spring:
         # Notification REST
         # =========================
         - id: notification-service
-          uri: http://notification-service:8081
+          uri: ${NOTIFICATION_SERVICE_URL}
           predicates:
             - Path=/notifications/**
           filters:
@@ -107,8 +108,8 @@ spring:
           uri: ${NOTIFICATION_SERVICE_WS_URL}
           predicates:
             - Path=/ws/**
-          filters:
-            - AuthenticationFilter
+          # filters:
+          #   - AuthenticationFilter
 
 logging:
   level:
