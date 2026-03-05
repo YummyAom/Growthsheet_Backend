@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.growthsheet.payment_service.config.client.NotificationClient;
 import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.PaymentStatus;
 import com.growthsheet.payment_service.entity.Payment;
@@ -23,7 +23,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
-
+    private final NotificationClient notificationClient;
     @Value("${stripe.mobile.success-url}")
     private String successUrl;
 
@@ -33,11 +33,13 @@ public class PaymentService {
     public PaymentService(
             OrderClient orderClient,
             PaymentRepository paymentRepository,
+            NotificationClient notificationClient,
             @Value("${stripe.public_key}") String publicKey,
             @Value("${stripe.secret_key}") String secretKey) {
 
         this.paymentRepository = paymentRepository;
         this.orderClient = orderClient;
+        this.notificationClient = notificationClient;
         Stripe.apiKey = secretKey;
     }
 
@@ -80,6 +82,7 @@ public class PaymentService {
         Optional<Payment> existing = paymentRepository.findByOrderId(orderId);
         if (existing.isEmpty()) {
             Payment payment = Payment.builder()
+                    .userId(userId)
                     .id(UUID.randomUUID())
                     .orderId(orderId)
                     .chargeId(session.getId())
@@ -120,8 +123,11 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
-
         orderClient.markOrderAsPaid(orderId);
+        notificationClient.createNotification(
+                payment.getUserId(), // ต้องมี userId ใน Payment entity
+                "ชำระเงินสำเร็จ 🎉",
+                "คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
     }
 
     // ===== EXPIRED / FAILED =====

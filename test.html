@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+  <h2>Notification Test</h2>
+
+  <script>
+    const userId = "2af0438c-0cb4-4217-9775-d955ad20f115";
+
+    const socket = new SockJS("http://localhost:8088/ws");
+
+    const client = new StompJs.Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        "X-USER-ID": userId
+      },
+      onConnect: () => {
+        console.log("Connected!");
+
+        client.subscribe("/user/queue/notifications", (message) => {
+          console.log("New Notification:", message.body);
+          alert(message.body);
+        });
+      }
+    });
+
+    client.activate();
+  </script>
+</body>
+</html>

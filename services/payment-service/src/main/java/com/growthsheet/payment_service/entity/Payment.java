@@ -23,6 +23,9 @@ public class Payment {
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
     @Column(name = "charge_id", nullable = false, unique = true)
     private String chargeId;
 
