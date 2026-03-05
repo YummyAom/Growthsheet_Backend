@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 @FeignClient(
     name = "notification-service",
-    url = "${NOTIFICATION_SERVICE_URL}"
+    url = "${GATEWAY_SERVICE_URL}"
 )
 public interface NotificationClient {
 
-    @PostMapping("/api/notifications")
+    @PostMapping("/notifications")
     void createNotification(
             @RequestHeader("X-USER-ID") UUID userId,
             @RequestParam String title,

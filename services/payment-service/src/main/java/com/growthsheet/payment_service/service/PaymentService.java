@@ -99,7 +99,7 @@ public class PaymentService {
     // ===== SUCCESS =====
     @Transactional
     public void handleCheckoutCompleted(Event event) {
-
+        
         var stripeObject = event.getDataObjectDeserializer()
                 .getObject().orElse(null);
 
