@@ -17,7 +17,9 @@ import com.stripe.Stripe;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class PaymentService {
 
@@ -99,7 +101,7 @@ public class PaymentService {
     // ===== SUCCESS =====
     @Transactional
     public void handleCheckoutCompleted(Event event) {
-        
+
         var stripeObject = event.getDataObjectDeserializer()
                 .getObject().orElse(null);
 
@@ -107,6 +109,9 @@ public class PaymentService {
             return;
 
         Session session = (Session) stripeObject;
+
+        if (session.getMetadata() == null)
+            return;
 
         String orderIdStr = session.getMetadata().get("orderId");
         if (orderIdStr == null)
@@ -123,11 +128,21 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
-        orderClient.markOrderAsPaid(orderId);
-        notificationClient.createNotification(
-                payment.getUserId(), // ต้องมี userId ใน Payment entity
-                "ชำระเงินสำเร็จ 🎉",
-                "คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
+
+        try {
+            orderClient.markOrderAsPaid(orderId);
+        } catch (Exception e) {
+            log.error("Order update failed", e);
+        }
+
+        try {
+            notificationClient.createNotification(
+                    payment.getUserId(),
+                    "ชำระเงินสำเร็จ 🎉",
+                    "คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
+        } catch (Exception e) {
+            log.error("Notification failed", e);
+        }
     }
 
     // ===== EXPIRED / FAILED =====
