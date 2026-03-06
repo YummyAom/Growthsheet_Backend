@@ -11,6 +11,6 @@ import com.growthsheet.product_service.dto.UserProfileResponse;
 
 @FeignClient(name = "user-service", url = "${USER_SERVICE_URL}", configuration = FeignOkHttpConfig.class)
 public interface UserClient {
-    @GetMapping("/{id}") 
+    @GetMapping("/api/users/{id}")
     UserProfileResponse getUserById(@PathVariable("id") UUID id);
 }

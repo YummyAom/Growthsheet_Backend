@@ -75,9 +75,14 @@ public class ReviewService {
             return new ReviewResponse(
                     review.getId(),
                     review.getSheetId(),
-                    new UserDTO(review.getUserId(), userName),
+                    new UserDTO(
+                            review.getUserId(),
+                            user != null ? user.getName() : "Unknown User",
+                            user != null ? user.getUserPhotoUrl() : null 
+            ),
                     review.getComment(),
-                    review.getRating());
+                    review.getRating(),
+                    review.getCreatedAt());
         }).toList();
     }
 
