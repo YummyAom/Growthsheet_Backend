@@ -1,18 +1,27 @@
 package com.growthsheet.product_service.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.growthsheet.product_service.config.client.OrderClient;
 import com.growthsheet.product_service.config.client.UserClient;
+import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.dto.UserDTO;
 import com.growthsheet.product_service.dto.UserProfileResponse;
+import com.growthsheet.product_service.dto.client.OrderResponse;
+import com.growthsheet.product_service.dto.request.SheetImageRequest;
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
+import com.growthsheet.product_service.dto.response.PendingReviewResponse;
 import com.growthsheet.product_service.dto.response.ReviewResponse;
 import com.growthsheet.product_service.entity.SheetReview;
 import com.growthsheet.product_service.repository.ReviewRepository;
+import com.growthsheet.product_service.repository.SheetImageRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 
 import jakarta.transaction.Transactional;
@@ -20,6 +29,7 @@ import jakarta.transaction.Transactional;
 @Service
 public class ReviewService {
     private final SheetRepository sheetRepo;
+    private final SheetImageRepository sheetImageRepo;
     private final ReviewRepository reviewRepo;
     private final OrderClient orderClient;
     private final UserClient userClient;
@@ -29,11 +39,13 @@ public class ReviewService {
             SheetRepository sheetRepo,
             ReviewRepository reviewRepo,
             OrderClient orderClient,
-            UserClient userClient) {
+            UserClient userClient,
+            SheetImageRepository sheetImageRepo) {
         this.sheetRepo = sheetRepo;
         this.reviewRepo = reviewRepo;
         this.orderClient = orderClient;
         this.userClient = userClient;
+        this.sheetImageRepo = sheetImageRepo;
     }
 
     @Transactional
@@ -100,4 +112,52 @@ public class ReviewService {
 
         return "ลบริวิวเรียบร้อยแล้ว";
     }
+
+    public List<PendingReviewResponse> getPendingReviews(UUID userId) {
+
+        List<PendingReviewResponse> pendingReviews = new ArrayList<>();
+        Set<UUID> addedSheetIds = new HashSet<>();
+
+        PageResponse<OrderResponse> orders = orderClient.getPaidOrders(userId, Pageable.unpaged());
+
+        orders.getContent().forEach(order -> {
+
+            order.getItems().forEach(item -> {
+
+                UUID sheetId = item.getSheetId();
+
+                if (addedSheetIds.contains(sheetId)) {
+                    return;
+                }
+
+                boolean reviewed = reviewRepo.existsBySheetIdAndUserId(sheetId, userId);
+
+                if (!reviewed) {
+
+                    sheetRepo.findById(sheetId).ifPresent(sheet -> {
+
+                        PendingReviewResponse response = new PendingReviewResponse();
+
+                        response.setSheetId(sheet.getId());
+                        response.setTitle(sheet.getTitle());
+                        response.setDescription(sheet.getDescription());
+                        response.setAverageRating(sheet.getAverageRating());
+                        response.setCategory(sheet.getCategory().getName());
+                        response.setCourseName(sheet.getCourseName());
+
+                        sheetImageRepo
+                                .findFirstBySheetIdOrderBySortOrderAsc(sheet.getId())
+                                .ifPresent(img -> response.setThumbnailUrl(img.getImageUrl()));
+
+                        pendingReviews.add(response);
+
+                        addedSheetIds.add(sheetId);
+                    });
+                }
+            });
+        });
+
+        return pendingReviews;
+    }
+
 }

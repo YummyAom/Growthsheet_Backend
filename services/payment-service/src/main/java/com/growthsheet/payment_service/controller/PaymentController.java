@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.growthsheet.payment_service.config.client.NotificationClient;
 import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
@@ -25,15 +26,40 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderClient orderClient;
-    
-    private final PaymentRepository paymentRepo;
 
+    private final PaymentRepository paymentRepo;
+    private final NotificationClient notificaiton;
     @Value("${stripe.webhook.secret}")
     private String endpointSecret;
 
     @GetMapping("/")
     public String getHello() {
         return "hello payment";
+    }
+
+    @PostMapping("/testNoti")
+    public ResponseEntity<?> testNoti(
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        try {
+
+            notificaiton.createNotification(
+                    userId,
+                    "Test Notification 🚀",
+                    "นี่คือการทดสอบ notification จาก payment-service");
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "message", "Notification sent"));
+
+        } catch (Exception e) {
+
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "success", false,
+                            "error", e.getMessage()));
+        }
     }
 
     @PostMapping("/create-checkout-session/{orderId}")

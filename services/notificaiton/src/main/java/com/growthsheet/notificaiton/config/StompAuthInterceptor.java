@@ -16,15 +16,18 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
 
-        StompHeaderAccessor accessor =
-                MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
 
             String userId = accessor.getFirstNativeHeader("X-USER-ID");
 
+            System.out.println("WS CONNECT HEADER userId = " + userId);
+
             if (userId != null) {
                 accessor.setUser(new UserPrincipal(UUID.fromString(userId)));
+
+                System.out.println("Principal SET = " + userId);
             }
         }
 

@@ -26,4 +26,5 @@ public interface OrderClient {
     PageResponse<OrderResponse> getPaidOrders(
             @RequestHeader("X-USER-ID") UUID userId,
             @SpringQueryMap Pageable pageable);
+
 }

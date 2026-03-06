@@ -20,4 +20,6 @@ public class SellerService {
                 .map(u -> new SellerDTO(u.getId(), u.getName()))
                 .orElse(null);
     }
+
+    
 }

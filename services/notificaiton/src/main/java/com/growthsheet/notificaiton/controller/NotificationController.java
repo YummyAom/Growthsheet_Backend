@@ -20,7 +20,7 @@ public class NotificationController {
 
     // ===== create notification (internal call เช่น จาก payment-service) =====
     @PostMapping
-    public Notification create(
+    public Notification createNotification(
             @RequestHeader("X-USER-ID") UUID userId,
             @RequestParam String title,
             @RequestParam String message
