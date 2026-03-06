@@ -43,7 +43,7 @@ public class FileService {
                         "Only PDF and Image files are supported");
             }
 
-            Map uploadResult = uploadToCloudinary(file, fileType);
+            Map<String, Object> uploadResult = uploadToCloudinary(file, fileType);
 
             result.put("url", uploadResult.get("secure_url"));
             result.put("pageCount", pageCount);
@@ -58,7 +58,7 @@ public class FileService {
         }
     }
 
-    public List<String> uploadImage(List<MultipartFile> images) {
+    public List<String> uploadImages(List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image is empty or missing");
         }
@@ -89,6 +89,41 @@ public class FileService {
         }
     }
 
+    public Map<String, Object> uploadSlip(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slip file is empty or missing");
+        }
+
+        String contentType = file.getContentType();
+        if (!isImage(contentType)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                    "Only image files are supported for slip upload");
+        }
+
+        try {
+            Map<String, Object> uploadParams = new HashMap<>();
+            uploadParams.put("folder", "growthsheet_assets/slips");
+            uploadParams.put("resource_type", "auto");
+            uploadParams.put("quality", "auto");
+            uploadParams.put("fetch_format", "auto");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                    uploadParams);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("url", uploadResult.get("secure_url"));
+            result.put("fileType", "SLIP");
+            result.put("fileName", file.getOriginalFilename());
+
+            return result;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Slip upload failed: " + e.getMessage());
+        }
+    }
+
     // --- Private Helper Methods ---
 
     private boolean isPdf(String contentType) {
@@ -112,9 +147,9 @@ public class FileService {
     ) throws IOException {
         Map<String, Object> uploadParams = new HashMap<>();
 
-        if (fileType == "PDF") {
+        if ("PDF".equals(fileType)) {
             uploadParams.put("folder", "growthsheet_assets/pdf");
-        } else if (fileType == "IMAGE") {
+        } else if ("IMAGE".equals(fileType)) {
             uploadParams.put("folder", "growthsheet_assets/images");
             uploadParams.put("quality", "auto");
             uploadParams.put("fetch_format", "auto");
