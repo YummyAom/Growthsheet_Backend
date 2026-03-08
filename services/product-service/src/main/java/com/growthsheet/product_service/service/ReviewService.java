@@ -1,5 +1,6 @@
 package com.growthsheet.product_service.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,11 +57,31 @@ public class ReviewService {
 
         // List<OrderResponse> orders = orderClient.getOrdersByUser(userId);
         SheetReview review = new SheetReview();
+        review.setSheetId(sheetId); // ⭐ เพิ่ม
+        review.setUserId(userId); // ⭐ เพิ่ม
         review.setComment(request.comment());
         review.setRating(request.rating());
         reviewRepo.save(review);
-
+        updateSheetRating(sheetId);
         return "บันทึกรีวิวเรียบร้อยแล้ว";
+    }
+
+    private void updateSheetRating(UUID sheetId) {
+
+        Double avg = reviewRepo.getAverageRatingBySheetId(sheetId);
+        Long count = reviewRepo.countBySheetId(sheetId);
+
+        sheetRepo.findById(sheetId).ifPresent(sheet -> {
+
+            BigDecimal avgRating = avg != null
+                    ? BigDecimal.valueOf(avg)
+                    : BigDecimal.ZERO;
+
+            sheet.setAverageRating(avgRating);
+            sheet.setReviewCount(count.intValue());
+
+            sheetRepo.save(sheet);
+        });
     }
 
     public List<ReviewResponse> getReviewBySheetId(UUID sheetId) {
@@ -78,8 +99,7 @@ public class ReviewService {
                     new UserDTO(
                             review.getUserId(),
                             user != null ? user.getName() : "Unknown User",
-                            user != null ? user.getUserPhotoUrl() : null 
-            ),
+                            user != null ? user.getUserPhotoUrl() : null),
                     review.getComment(),
                     review.getRating(),
                     review.getCreatedAt());

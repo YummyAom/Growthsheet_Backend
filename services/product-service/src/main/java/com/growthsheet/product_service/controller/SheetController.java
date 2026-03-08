@@ -57,6 +57,11 @@ public class SheetController {
         return "Hello products";
     }
 
+    @GetMapping("/tags")
+    public ResponseEntity<List<String>> getAllTags() {
+        return ResponseEntity.ok(sheetService.getAllTags());
+    }
+
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SheetResponse> createSheet(
             @RequestHeader("X-USER-ID") UUID sellerId,
@@ -107,24 +112,16 @@ public class SheetController {
                 sheetService.getDownloadInfo(id, userId));
     }
 
-    // @GetMapping
-    // public ResponseEntity<Page<SheetCardResponse>> getSheets(
-    // @RequestParam(defaultValue = "0") int page,
-    // @RequestParam(defaultValue = "10") int size) {
-
-    // return ResponseEntity.ok(sheetService.getSheets(page, size));
-    // }
-    
-
     @GetMapping
     public ResponseEntity<Page<SheetCardResponse>> getSheets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "latest") String sort,
-            @RequestParam(required = false) Boolean isPublished) {
+            @RequestParam(required = false) Boolean isPublished,
+            @RequestParam(required = false) List<String> tags) {
 
         return ResponseEntity.ok(
-                sheetService.getSheets(page, size, sort, isPublished));
+                sheetService.getSheets(page, size, sort, isPublished, tags));
     }
 
     @GetMapping("/{sheetId}")
