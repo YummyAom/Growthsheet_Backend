@@ -34,6 +34,7 @@ import com.growthsheet.product_service.entity.SheetReview;
 import com.growthsheet.product_service.entity.SheetStatus;
 import com.growthsheet.product_service.mapper.SheetCardMapper;
 import com.growthsheet.product_service.repository.CategoryRepository;
+import com.growthsheet.product_service.repository.HashtagRepository;
 import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 import com.growthsheet.product_service.repository.UserRepository;
@@ -55,7 +56,7 @@ public class SheetService {
         private final ReviewRepository reviewRepo;
         private final SheetAssembler sheetAssembler;
         private final SheetCardMapper sheetCardMapper;
-
+        private final HashtagRepository hashtagRepository;
         private final OrderClient orderClient;
 
         public SheetService(
@@ -68,7 +69,9 @@ public class SheetService {
                         ReviewRepository reviewRepo,
                         SheetAssembler sheetAssembler,
                         SheetCardMapper sheetCardMapper,
-                        OrderClient orderClient) {
+                        OrderClient orderClient,
+                        HashtagRepository hashtagRepository
+                ) {
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -79,6 +82,7 @@ public class SheetService {
                 this.sheetAssembler = sheetAssembler;
                 this.sheetCardMapper = sheetCardMapper;
                 this.orderClient = orderClient;
+                this.hashtagRepository = hashtagRepository;
         }
 
         public PageResponse<SheetCardResponse> getPurchasedSheets(UUID userId, Pageable pageable) {
@@ -124,6 +128,10 @@ public class SheetService {
                                 orderPage.getTotalElements(),
                                 orderPage.getTotalPages(),
                                 orderPage.isLast());
+        }
+        @Transactional
+        public List<String> getAllTags() {
+                return hashtagRepository.findAllTagNames();
         }
 
         @Transactional
@@ -252,27 +260,56 @@ public class SheetService {
                         int page,
                         int size,
                         String sort,
-                        Boolean isPublished // null = ทั้งหมด
-        ) {
+                        Boolean isPublished,
+                        List<String> tags) {
+
                 Pageable pageable = PageRequest.of(page, size, getSort(sort));
 
                 Page<Sheet> sheets;
 
-                if (isPublished == null) {
-                        // ดึงทั้งหมดทุกสถานะ (หรือเฉพาะที่ต้องการ เช่น APPROVED, PENDING, REJECTED)
-                        sheets = sheetRepo.findAll(pageable);
-                } else if (isPublished) {
-                        // true = กรองเฉพาะ APPROVED
-                        sheets = sheetRepo.findByStatusInAndIsPublished(
-                                        List.of(SheetStatus.APPROVED),
-                                        true,
-                                        pageable);
+                boolean hasTags = tags != null && !tags.isEmpty();
+
+                if (hasTags) {
+
+                        if (Boolean.TRUE.equals(isPublished)) {
+
+                                sheets = sheetRepo.findPublishedSheetsByTags(
+                                                tags,
+                                                List.of(SheetStatus.APPROVED),
+                                                pageable);
+
+                        } else if (Boolean.FALSE.equals(isPublished)) {
+
+                                sheets = sheetRepo.findUnpublishedSheetsByTags(
+                                                tags,
+                                                List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
+                                                pageable);
+
+                        } else {
+
+                                sheets = sheetRepo.findSheetsByTags(tags, pageable);
+                        }
+
                 } else {
-                        // false = กรอง PENDING และ REJECTED
-                        sheets = sheetRepo.findByStatusInAndIsPublished(
-                                        List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
-                                        false,
-                                        pageable);
+
+                        if (Boolean.TRUE.equals(isPublished)) {
+
+                                sheets = sheetRepo.findByStatusInAndIsPublished(
+                                                List.of(SheetStatus.APPROVED),
+                                                true,
+                                                pageable);
+
+                        } else if (Boolean.FALSE.equals(isPublished)) {
+
+                                sheets = sheetRepo.findByStatusInAndIsPublished(
+                                                List.of(SheetStatus.PENDING, SheetStatus.REJECTED),
+                                                false,
+                                                pageable);
+
+                        } else {
+
+                                sheets = sheetRepo.findAll(pageable);
+                        }
                 }
 
                 return sheets.map(this::toSheetCardResponse);

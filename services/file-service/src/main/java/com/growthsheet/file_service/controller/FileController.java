@@ -32,7 +32,17 @@ public class FileController {
      */
     @PostMapping("/upload-images")
     public ResponseEntity<List<String>> uploadImages(@RequestParam("images") List<MultipartFile> images) {
-        List<String> imageUrls = fileService.uploadImage(images);
+        List<String> imageUrls = fileService.uploadImages(images);
         return ResponseEntity.ok(imageUrls);
+    }
+
+    /**
+     * สำหรับอัปโหลดสลิปการโอนเงิน (รูปภาพเดียว)
+     * POST /api/file/upload-slip
+     */
+    @PostMapping("/upload-slip")
+    public ResponseEntity<Map<String, Object>> uploadSlip(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> response = fileService.uploadSlip(file);
+        return ResponseEntity.ok(response);
     }
 }

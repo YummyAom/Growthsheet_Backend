@@ -49,6 +49,16 @@
 			<groupId>io.github.openfeign</groupId>
 			<artifactId>feign-okhttp</artifactId>
 		</dependency>
+
+		<dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-form-spring</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-jackson</artifactId>
+        </dependency>
 		
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -76,6 +86,7 @@
 			<artifactId>dotenv-java</artifactId>
 			<version>3.2.0</version>
 		</dependency>
+
 
 	</dependencies>
 	<dependencyManagement>

@@ -1,5 +1,7 @@
 package com.growthsheet.product_service.entity;
 
+import java.time.Instant;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -13,17 +15,30 @@ public class Hashtag {
     @Column(nullable = false, unique = true, length = 50)
     private String name;
 
-    // getters / setters
+    @Column(name = "created_at")
+    private Instant createdAt;
+
     public Long getId() {
         return id;
     }
+
     public String getName() {
         return name;
     }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }
