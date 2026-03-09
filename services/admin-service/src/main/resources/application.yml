@@ -43,3 +43,7 @@ feign:
     enabled: true
   okhttp:
     enabled: false
+
+internal:
+  service:
+    token: ${INTERNAL_SERVICE_TOKEN}

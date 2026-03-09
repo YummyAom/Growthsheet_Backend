@@ -42,4 +42,6 @@ jwt:
 cloudinary:
   url: ${CLOUDINARY_URL}
 
-
+internal:
+  service:
+    token: ${INTERNAL_SERVICE_TOKEN}
