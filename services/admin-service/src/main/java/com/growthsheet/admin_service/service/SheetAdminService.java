@@ -9,6 +9,7 @@ import com.growthsheet.admin_service.config.client.ProductClient;
 import com.growthsheet.admin_service.dto.RejectRequest;
 import com.growthsheet.admin_service.entity.SheetReviewLog;
 import com.growthsheet.admin_service.repository.SheetReviewLogRepository;
+import org.springframework.beans.factory.annotation.Value;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,13 +20,14 @@ public class SheetAdminService {
     private final ProductClient productClient;
     private final SheetReviewLogRepository logRepository;
 
+    @Value("${internal.service.token}")
+    private String internalServiceToken;
+
     @Transactional
     public void approve(UUID sheetId, UUID adminId, UUID sellerId) {
 
-        // 1. update product-service
-        productClient.approveSheet(sheetId);
+        productClient.approveSheet(sheetId, internalServiceToken); // ✅ ส่ง token
 
-        // 2. save log
         SheetReviewLog log = new SheetReviewLog();
         log.setSheetId(sheetId);
         log.setSellerId(sellerId);
@@ -37,16 +39,16 @@ public class SheetAdminService {
     }
 
     @Transactional
-    public void reject(UUID sheetId, UUID adminId, UUID sellerId, RejectRequest comment) {
+    public void reject(UUID sheetId, UUID adminId, UUID sellerId, RejectRequest request) {
 
-        productClient.rejectSheet(sheetId);
+        productClient.rejectSheet(sheetId, internalServiceToken, request); // ✅ ส่ง token + request
 
         SheetReviewLog log = new SheetReviewLog();
         log.setSheetId(sheetId);
         log.setSellerId(sellerId);
         log.setAdminId(adminId);
         log.setAction("REJECTED");
-        log.setComment(comment.getComment());
+        log.setComment(request.getComment());
 
         logRepository.save(log);
     }

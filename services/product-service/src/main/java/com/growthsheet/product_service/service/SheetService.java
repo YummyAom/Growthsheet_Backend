@@ -448,12 +448,13 @@ public class SheetService {
         }
 
         @Transactional
-        public void rejectSheet(UUID sheetId) {
+        public void rejectSheet(UUID sheetId, String adminNote) {
                 Sheet sheet = sheetRepo.findById(sheetId)
                                 .orElseThrow(() -> new RuntimeException("Sheet not found"));
 
                 sheet.setStatus(SheetStatus.REJECTED);
                 sheet.setIsPublished(false);
+                sheet.setAdminNote(adminNote);
         }
 
         @Transactional

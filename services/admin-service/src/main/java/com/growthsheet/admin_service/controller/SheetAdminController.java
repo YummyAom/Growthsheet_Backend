@@ -115,6 +115,7 @@ public class SheetAdminController {
                 sheet.getIsPublished(),
                 sheet.getSeller(), // ← ส่งทั้ง object
                 sheet.getImageUrl(),
+                sheet.getFileUrl(),
                 lastAction,
                 lastComment);
     }
