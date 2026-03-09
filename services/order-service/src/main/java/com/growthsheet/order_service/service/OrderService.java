@@ -164,4 +164,26 @@ public class OrderService {
         orderRepo.save(order);
     }
 
+    // ===== ยกเลิก Order (ยกเลิกได้เฉพาะ PENDING) =====
+    @Transactional
+    public void cancelOrder(UUID orderId, UUID userId) {
+
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("ไม่พบ Order"));
+
+        // เช็คว่าเป็น order ของ user คนนี้หรือไม่
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("ไม่มีสิทธิ์ยกเลิก Order นี้");
+        }
+
+        // เช็คว่า order ยังเป็น PENDING อยู่หรือไม่
+        if (!"PENDING".equals(order.getStatus())) {
+            throw new RuntimeException(
+                    "ไม่สามารถยกเลิก Order ที่มีสถานะ " + order.getStatus() + " ได้ (ยกเลิกได้เฉพาะ PENDING)");
+        }
+
+        order.setStatus("CANCELLED");
+        orderRepo.save(order);
+    }
+
 }

@@ -15,8 +15,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.growthsheet.user_service.dto.requests.ChangePasswordRequest;
+import com.growthsheet.user_service.dto.requests.ForgotPasswordRequest;
 import com.growthsheet.user_service.dto.requests.LoginRequest;
 import com.growthsheet.user_service.dto.requests.RegisterRequest;
+import com.growthsheet.user_service.dto.requests.ResetPasswordRequest;
 import com.growthsheet.user_service.dto.response.AuthResponse;
 import com.growthsheet.user_service.entity.User;
 import com.growthsheet.user_service.entity.UserRole;
@@ -322,5 +325,64 @@ public class AuthService {
                                                 "expires_in", TOKEN_TTL.getSeconds(),
                                                 "session_token", sessionToken,
                                                 "refresh_token", refreshToken));
+        // ===== เปลี่ยนรหัสผ่าน =====
+        public void changePassword(UUID userId, ChangePasswordRequest req) {
+                User user = userRepo.findById(userId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "ไม่พบผู้ใช้งาน"));
+
+                // เช็ครหัสผ่านเดิมว่าตรงหรือไม่
+                if (!passwordUtil.matches(req.oldPassword(), user.getPassword())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST, "รหัสผ่านเดิมไม่ถูกต้อง");
+                }
+
+                // เช็ครหัสผ่านใหม่ตรงกันหรือไม่
+                if (!req.newPassword().equals(req.confirmNewPassword())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST, "รหัสผ่านใหม่ไม่ตรงกัน");
+                }
+
+                user.setPassword(passwordUtil.hashPassword(req.newPassword()));
+                userRepo.save(user);
+        }
+
+        // ===== ลืมรหัสผ่าน (ส่ง OTP ไป email) =====
+        public void forgotPassword(String email) {
+                userRepo.findByEmail(email)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "ไม่พบ email นี้ในระบบ"));
+
+                otpService.sendOtp(email);
+        }
+
+        // ===== Reset Password (ยืนยัน OTP แล้วเปลี่ยนรหัสผ่าน) =====
+        public void resetPassword(ResetPasswordRequest req) {
+                // เช็ครหัสผ่านใหม่ตรงกันหรือไม่
+                if (!req.newPassword().equals(req.confirmNewPassword())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST, "รหัสผ่านใหม่ไม่ตรงกัน");
+                }
+
+                // ยืนยัน OTP (ถ้าผิดจะ throw exception จาก OtpService)
+                otpService.verify(req.email(), req.otp());
+
+                // เปลี่ยนรหัสผ่าน
+                User user = userRepo.findByEmail(req.email())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "ไม่พบผู้ใช้งาน"));
+
+                user.setPassword(passwordUtil.hashPassword(req.newPassword()));
+                userRepo.save(user);
+        }
+
+        // ===== ลบบัญชี (Soft Delete) =====
+        public void deleteAccount(UUID userId) {
+                User user = userRepo.findById(userId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "ไม่พบผู้ใช้งาน"));
+
+                user.setEnabled(false);
+                userRepo.save(user);
         }
 }

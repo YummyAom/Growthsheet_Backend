@@ -8,14 +8,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.growthsheet.payment_service.dto.CreateWithdrawalRequest;
 import com.growthsheet.payment_service.dto.SellerBalanceResponse;
 import com.growthsheet.payment_service.dto.WithdrawalHistoryDTO;
 import com.growthsheet.payment_service.service.WithdrawalService;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -48,13 +52,6 @@ public class WithdrawalController {
     /**
      * ดูยอดเงินที่ถอนได้ของ seller
      * GET /api/payments/withdrawals/balance
-     *
-     * Response:
-     * {
-     * "netRevenue": 8500.00, // ยอดขายหลังหัก 15%
-     * "withdrawn": 3000.00, // ถอนไปแล้ว + รอโอน
-     * "available": 5500.00 // ยอดที่ถอนได้
-     * }
      */
     @GetMapping("/balance")
     public ResponseEntity<?> getSellerBalance(
@@ -68,4 +65,26 @@ public class WithdrawalController {
                     .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
+
+    /**
+     * สร้างคำขอถอนเงินใหม่
+     * POST /api/payments/withdrawals/request
+     */
+    @PostMapping("/request")
+    public ResponseEntity<?> createWithdrawalRequest(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @RequestBody CreateWithdrawalRequest req) {
+
+        try {
+            WithdrawalHistoryDTO result = withdrawalService.createWithdrawalRequest(userId, req);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "สร้างคำขอถอนเงินเรียบร้อย รอ admin อนุมัติ",
+                    "data", result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 }
+

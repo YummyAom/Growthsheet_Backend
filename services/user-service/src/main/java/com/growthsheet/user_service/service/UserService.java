@@ -1,5 +1,6 @@
 package com.growthsheet.user_service.service;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -180,5 +181,16 @@ public class UserService {
         user.setRole(newRole);
 
         userRepository.save(user);
+    }
+
+    // ===== ดึงข้อมูลธนาคารของ seller =====
+    public Map<String, String> getSellerBankInfo(UUID userId) {
+        SellerDetail seller = sellerDetailRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("ไม่พบข้อมูลผู้ขาย"));
+
+        return Map.of(
+                "bankName", seller.getBankName() != null ? seller.getBankName() : "",
+                "bankAccountNumber", seller.getBankAccountNumber() != null ? seller.getBankAccountNumber() : "",
+                "bankAccountName", seller.getBankAccountName() != null ? seller.getBankAccountName() : "");
     }
 }
