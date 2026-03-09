@@ -195,4 +195,21 @@ public class SheetController {
         return ResponseEntity.ok("ปฏิเสธชีทเรียบร้อยแล้ว");
     }
 
+    /**
+     * ดูประวัติการขอ publish sheet ของ seller (รอ admin อนุมัติ)
+     * GET /api/products/seller/sheet-applications?status=PENDING&page=0&size=10
+     *
+     * status: PENDING | APPROVED | REJECTED | null (ทั้งหมด)
+     */
+    @GetMapping("/seller/sheet-applications")
+    public ResponseEntity<Page<SheetCardResponse>> getSheetPublicationHistory(
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                sheetService.getSheetPublicationHistory(sellerId, status, page, size));
+    }
+
 }

@@ -460,4 +460,31 @@ public class SheetService {
         @Transactional
         public void createReview(UUID sheetId, UUID userId) {
         }
+
+        /**
+         * ดูประวัติการขอ publish sheet ของ seller
+         * สามารถกรองตาม status ได้ (PENDING, APPROVED, REJECTED) หรือ null = ทั้งหมด
+         */
+        public Page<SheetCardResponse> getSheetPublicationHistory(
+                        UUID sellerId,
+                        String status,
+                        int page,
+                        int size) {
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+                Page<Sheet> sheets;
+
+                if (status != null && !status.isBlank()) {
+                        SheetStatus sheetStatus = SheetStatus.valueOf(status.toUpperCase());
+                        sheets = sheetRepo.findAllBySellerIdAndStatus(sellerId, sheetStatus, pageable);
+                } else {
+                        sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
+                }
+
+                return sheets.map(sheetAssembler::assemble);
+        }
 }

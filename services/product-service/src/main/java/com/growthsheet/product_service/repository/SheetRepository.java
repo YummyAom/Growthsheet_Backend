@@ -82,6 +82,14 @@ public interface SheetRepository extends JpaRepository<Sheet, UUID> {
             Boolean isPublished,
             Pageable pageable);
 
+    /**
+     * ดึง sheets ตาม sellerId และ status (เช่น PENDING, APPROVED, REJECTED)
+     */
+    Page<Sheet> findAllBySellerIdAndStatus(
+            UUID sellerId,
+            SheetStatus status,
+            Pageable pageable);
+
     @Query("""
                 SELECT s
                 FROM Sheet s
