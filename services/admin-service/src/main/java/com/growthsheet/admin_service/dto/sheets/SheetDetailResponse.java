@@ -13,6 +13,6 @@ public class SheetDetailResponse {
     private String description;
     private Boolean isPublished;
     private String imageUrl;
-
+    private String fileUrl;
     private SellerDTO seller; // ← ใช้อันนี้แทน sellerId
 }

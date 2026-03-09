@@ -1,4 +1,3 @@
-
 package com.growthsheet.admin_service.service;
 
 import java.time.LocalDateTime;
@@ -16,9 +15,11 @@ import com.growthsheet.admin_service.dto.SellerApplicationSummaryDTO;
 import com.growthsheet.admin_service.dto.SellerReviewResponse;
 import com.growthsheet.admin_service.dto.UpdateUserRoleRequest;
 import com.growthsheet.admin_service.entity.SellerDetails;
+import com.growthsheet.admin_service.entity.SellerReviewLog;
 import com.growthsheet.admin_service.entity.SellerStatus;
 import com.growthsheet.admin_service.mapper.SellerApplicationMapper;
 import com.growthsheet.admin_service.repository.SellerDetailsRepository;
+import com.growthsheet.admin_service.repository.SellerReviewLogRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ public class SellerAdminService {
     private final SellerDetailsRepository sellerDetailsRepository;
     private final SellerApplicationMapper mapper;
     private final UserClient userClient;
+    private final SellerReviewLogRepository sellerReviewLogRepository;
 
     public Page<SellerApplicationSummaryDTO> getSellerApplications(
             String status,
@@ -50,28 +52,6 @@ public class SellerAdminService {
         return dto;
     }
 
-    // @Transactional
-    // public SellerApplicationDetailDTO reviewSeller(
-    // UUID userId,
-    // String status,
-    // String adminComment,
-    // UUID adminId) {
-    // System.out.println("Review seller called");
-    // SellerDetails entity = sellerDetailsRepository.findByUserId(userId)
-    // .orElseThrow(() -> new RuntimeException("Seller application not found"));
-
-    // SellerStatus newStatus = SellerStatus.valueOf(status.toUpperCase());
-
-    // entity.setIsVerified(newStatus);
-    // entity.setAdminComment(adminComment);
-    // entity.setReviewedBy(adminId);
-    // entity.setReviewedAt(LocalDateTime.now());
-
-    // sellerDetailsRepository.save(entity);
-
-    // return mapper.toDetailDTO(entity);
-    // }
-
     @Transactional
     public SellerReviewResponse reviewSeller(
             UUID userId,
@@ -82,29 +62,33 @@ public class SellerAdminService {
         SellerDetails entity = sellerDetailsRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Seller application not found"));
 
-        // Prevent double review
         if (entity.getStatus() != SellerStatus.PENDING) {
             throw new RuntimeException("Application already reviewed");
         }
 
-        // Validate reject comment
-        if (status == SellerStatus.REJECTED &&
-                (adminComment == null || adminComment.isBlank())) {
+        if (status == SellerStatus.REJECTED && (adminComment == null || adminComment.isBlank())) {
             throw new RuntimeException("Admin comment is required for rejection");
         }
 
+        // 1. อัปเดตตาราง seller_details
         entity.setStatus(status);
         entity.setAdminComment(status == SellerStatus.REJECTED ? adminComment : null);
         entity.setReviewedBy(adminId);
         entity.setReviewedAt(LocalDateTime.now());
-
         sellerDetailsRepository.save(entity);
 
+        // 2. ถ้าอนุมัติให้ไปอัปเดต Role ผู้ใช้งาน
         if (status == SellerStatus.APPROVED) {
-            userClient.updateUserRole(
-                    userId,
-                    new UpdateUserRoleRequest("SELLER"));
+            userClient.updateUserRole(userId, new UpdateUserRoleRequest("SELLER"));
         }
+
+        // 3. ✨ บันทึก Log การตรวจลงตาราง seller_review_logs ✨
+        SellerReviewLog log = new SellerReviewLog();
+        log.setUserId(userId);
+        log.setAdminId(adminId);
+        log.setAction(status.name()); // "APPROVED" หรือ "REJECTED"
+        log.setComment(status == SellerStatus.REJECTED ? adminComment : null);
+        sellerReviewLogRepository.save(log);
 
         String message = status == SellerStatus.APPROVED
                 ? "Seller approved successfully"

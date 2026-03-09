@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+import com.growthsheet.product_service.dto.request.RejectRequest;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
 import com.growthsheet.product_service.dto.response.DownloadResponse;
@@ -162,15 +165,33 @@ public class SheetController {
                 sheetLikeService.getLikedSheets(userId, page, size));
     }
 
+    @Value("${internal.service.token}")
+    private String internalServiceToken;
+
     @PatchMapping("/{sheetId}/approve")
-    public ResponseEntity<String> approveSheet(@PathVariable UUID sheetId) {
+    public ResponseEntity<String> approveSheet(
+            @RequestHeader("X-INTERNAL-TOKEN") String token,
+            @PathVariable UUID sheetId) {
+
+        if (!internalServiceToken.equals(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
         sheetService.approveSheet(sheetId);
         return ResponseEntity.ok("อนุมัติชีทเรียบร้อยแล้ว");
     }
 
     @PatchMapping("/{sheetId}/reject")
-    public ResponseEntity<String> rejectSheet(@PathVariable UUID sheetId) {
-        sheetService.rejectSheet(sheetId);
+    public ResponseEntity<String> rejectSheet(
+            @RequestHeader("X-INTERNAL-TOKEN") String token,
+            @PathVariable UUID sheetId,
+            @RequestBody RejectRequest request) {
+
+        if (!internalServiceToken.equals(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
+        sheetService.rejectSheet(sheetId, request.getComment());
         return ResponseEntity.ok("ปฏิเสธชีทเรียบร้อยแล้ว");
     }
 
