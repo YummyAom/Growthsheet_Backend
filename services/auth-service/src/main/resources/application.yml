@@ -14,7 +14,8 @@ spring:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-
+google:
+  client-id: ${GOOGLE_ID}
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXP_MS}

@@ -96,7 +96,7 @@ public class AuthService {
                 user.setName(regis.username());
                 user.setPassword(passwordUtil.hashPassword(regis.password()));
                 user.setRole(UserRole.BUYER);
-                user.setEnabled(false);
+                user.setEnabled(true);
                 userRepo.save(user);
                 otpService.sendOtp(user.getEmail());
 
@@ -178,7 +178,6 @@ public class AuthService {
                 }
 
                 // 4. ถ้าต้องการให้ admin ข้าม OTP ให้ลบบล็อกนี้ออก
-
 
                 // 5. สร้าง token
                 String accessToken = UUID.randomUUID().toString();
@@ -281,5 +280,47 @@ public class AuthService {
                 return redis.delete(redisKey)
                                 .then(redis.delete(refreshKey))
                                 .then();
+        }
+
+        public Mono<Map<String, Object>> loginWithUser(User user) {
+
+                String accessToken = UUID.randomUUID().toString();
+                String redisKey = "access_token:" + accessToken;
+
+                String sessionToken = Jwts.builder()
+                                .subject(user.getId().toString())
+                                .claim("user_id", user.getId().toString())
+                                .claim("user_name", user.getName())
+                                .claim("email", user.getEmail())
+                                .claim("role", user.getRole().name())
+                                .claim("user_photo_url",
+                                                user.getUserPhotoUrl() != null ? user.getUserPhotoUrl() : "")
+                                .issuedAt(new Date())
+                                .expiration(new Date(System.currentTimeMillis() + this.jwtExpMs))
+                                .signWith(this.secretKey)
+                                .compact();
+
+                String refreshToken = UUID.randomUUID().toString();
+                String refreshKey = "refresh_token:" + refreshToken;
+
+                Map<String, Object> session = Map.of(
+                                "user_id", user.getId().toString(),
+                                "user_name", user.getName(),
+                                "email", user.getEmail(),
+                                "role", user.getRole().name(),
+                                "user_photo_url",
+                                user.getUserPhotoUrl() != null ? user.getUserPhotoUrl() : "",
+                                "status", "ACTIVE");
+
+                return redis.opsForHash()
+                                .putAll(redisKey, session)
+                                .then(redis.expire(redisKey, TOKEN_TTL))
+                                .then(redis.opsForValue().set(refreshKey, user.getEmail(), Duration.ofDays(7)))
+                                .thenReturn(Map.of(
+                                                "access_token", accessToken,
+                                                "token_type", "bearer",
+                                                "expires_in", TOKEN_TTL.getSeconds(),
+                                                "session_token", sessionToken,
+                                                "refresh_token", refreshToken));
         }
 }

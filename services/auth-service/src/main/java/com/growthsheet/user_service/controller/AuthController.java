@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.growthsheet.user_service.dto.requests.GoogleLoginRequest;
 import com.growthsheet.user_service.dto.requests.LoginRequest;
 import com.growthsheet.user_service.dto.requests.RegisterRequest;
 import com.growthsheet.user_service.dto.requests.VerifyOtpRequest;
 import com.growthsheet.user_service.dto.response.AuthResponse;
 import com.growthsheet.user_service.service.AuthService;
+import com.growthsheet.user_service.service.GoogleService;
 import com.growthsheet.user_service.service.OtpService;
 
 import jakarta.validation.Valid;
@@ -27,16 +29,26 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/auth")
 public class AuthController {
     private AuthService authService;
-
+    private GoogleService googleService;
     public AuthController(
             AuthService authService,
-            OtpService otpService) {
+            OtpService otpService,
+            GoogleService googleService
+        ) {
         this.authService = authService;
+        this.googleService = googleService;
     }
 
     @GetMapping("/")
     public String hello() {
         return "Hello auth";
+    }
+
+    @PostMapping("/google-login")
+    public Mono<Map<String, Object>> googleLogin(
+        @RequestBody GoogleLoginRequest req
+    ){
+        return googleService.googleLogin(req.idToken());
     }
 
     // Spring จะไปหา JWT_SECRET มาใส่ให้เองอัตโนมัติ
