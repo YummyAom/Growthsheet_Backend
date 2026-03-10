@@ -16,8 +16,7 @@ import com.growthsheet.admin_service.dto.RejectRequest;
 import com.growthsheet.admin_service.dto.sheets.PageResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetCardResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetDetailResponse;
-
-// import com.growthsheet.order_service.dto.response.ProductResponse;
+import com.growthsheet.admin_service.dto.sheets.SheetReportResponse;
 
 @FeignClient(name = "product-service", url = "${GATEWAY_SERVICE_URL}", configuration = FeignOkHttpConfig.class)
 public interface ProductClient {
@@ -43,6 +42,39 @@ public interface ProductClient {
                         @RequestHeader("X-INTERNAL-TOKEN") String token,
                         @RequestBody RejectRequest request 
         );
+
+        // ===== Sheet Report Endpoints =====
+
+        /**
+         * ดึง report ทั้งหมด (กรองตาม status ได้)
+         */
+        @GetMapping("/products/reports")
+        PageResponse<SheetReportResponse> getReports(
+                        @RequestHeader("X-INTERNAL-TOKEN") String token,
+                        @RequestParam(required = false) String status,
+                        @RequestParam int page,
+                        @RequestParam int size);
+
+        /**
+         * ดึง report ทั้งหมดของ sheet นั้น
+         */
+        @GetMapping("/products/{sheetId}/reports")
+        PageResponse<SheetReportResponse> getReportsBySheetId(
+                        @RequestHeader("X-INTERNAL-TOKEN") String token,
+                        @PathVariable UUID sheetId,
+                        @RequestParam int page,
+                        @RequestParam int size);
+
+        /**
+         * Admin review report (อัปเดต status)
+         */
+        @PatchMapping("/products/reports/{reportId}/review")
+        SheetReportResponse reviewReport(
+                        @RequestHeader("X-INTERNAL-TOKEN") String token,
+                        @PathVariable UUID reportId,
+                        @RequestParam String status,
+                        @RequestParam(required = false) String adminNote,
+                        @RequestParam UUID adminId);
 
 }
 
