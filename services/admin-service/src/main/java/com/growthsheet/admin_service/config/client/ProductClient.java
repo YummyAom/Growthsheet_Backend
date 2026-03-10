@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.growthsheet.admin_service.config.FeignOkHttpConfig;
+import com.growthsheet.admin_service.dto.DownloadResponse;
 import com.growthsheet.admin_service.dto.RejectRequest;
 import com.growthsheet.admin_service.dto.sheets.PageResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetCardResponse;
@@ -33,15 +34,13 @@ public interface ProductClient {
         @PatchMapping("/products/{sheetId}/approve")
         void approveSheet(
                         @PathVariable UUID sheetId,
-                        @RequestHeader("X-INTERNAL-TOKEN") String token 
-        );
+                        @RequestHeader("X-INTERNAL-TOKEN") String token);
 
         @PatchMapping("/products/{sheetId}/reject")
         void rejectSheet(
                         @PathVariable UUID sheetId,
                         @RequestHeader("X-INTERNAL-TOKEN") String token,
-                        @RequestBody RejectRequest request 
-        );
+                        @RequestBody RejectRequest request);
 
         // ===== Sheet Report Endpoints =====
 

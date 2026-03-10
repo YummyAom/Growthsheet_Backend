@@ -1,5 +1,7 @@
 package com.growthsheet.admin_service.controller;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.growthsheet.admin_service.config.client.AnalysisClient;
 import com.growthsheet.admin_service.config.client.ProductClient;
+import com.growthsheet.admin_service.dto.DownloadResponse;
 import com.growthsheet.admin_service.dto.RejectRequest;
 import com.growthsheet.admin_service.dto.sheets.AdminSheetDetailResponse;
 import com.growthsheet.admin_service.dto.sheets.PageResponse;
@@ -30,6 +34,7 @@ public class SheetAdminController {
     private final SheetAdminService sheetAdminService;
     private final ProductClient productClient;
     private final SheetReviewLogRepository logRepository;
+    private final AnalysisClient analysisClient;
 
     @GetMapping("")
     public String getHello() {
@@ -45,19 +50,44 @@ public class SheetAdminController {
         return productClient.getSheets(page, size, sort, false);
     }
 
+    // @PatchMapping("/{sheetId}/approve")
+    // public String approve(
+    // @PathVariable UUID sheetId,
+    // @RequestHeader("X-USER-ID") UUID adminId) {
+
+    // var sheet = productClient.getSheetById(sheetId);
+
+    // UUID sellerId = null;
+    // if (sheet.getSeller() != null) {
+    // sellerId = sheet.getSeller().getId();
+    // }
+
+    // sheetAdminService.approve(sheetId, adminId, sellerId);
+
+    // return "อนุมัติชีทเรียบร้อยแล้ว";
+    // }
+
     @PatchMapping("/{sheetId}/approve")
     public String approve(
             @PathVariable UUID sheetId,
             @RequestHeader("X-USER-ID") UUID adminId) {
 
+        // 1. ดึงข้อมูล sheet
         var sheet = productClient.getSheetById(sheetId);
+        UUID sellerId = sheet.getSeller().getId();
 
-        UUID sellerId = null;
-        if (sheet.getSeller() != null) {
-            sellerId = sheet.getSeller().getId();
-        }
+        // 2. ดึง URL PDF
+        DownloadResponse download = productClient.adminDownload(sheetId);
+        String fileUrl = download.fileUrl();
 
-        sheetAdminService.approve(sheetId, adminId, sellerId);
+        // 3. approve sheet ใน product-service
+        // productClient.approveSheet(sheetId, "INTERNAL_SECRET_TOKEN");
+
+        // 4. บันทึก log admin
+        // sheetAdminService.approve(sheetId, adminId, sellerId);
+
+        // 5. ส่งไป AI วิเคราะห์
+        analysisClient.analyzeSheet(fileUrl, sheetId.toString());
 
         return "อนุมัติชีทเรียบร้อยแล้ว";
     }

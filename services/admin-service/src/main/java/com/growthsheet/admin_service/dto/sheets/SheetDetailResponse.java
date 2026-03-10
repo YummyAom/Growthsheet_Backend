@@ -14,5 +14,5 @@ public class SheetDetailResponse {
     private Boolean isPublished;
     private String imageUrl;
     private String fileUrl;
-    private SellerDTO seller; // ← ใช้อันนี้แทน sellerId
+    private SellerDTO seller; 
 }
