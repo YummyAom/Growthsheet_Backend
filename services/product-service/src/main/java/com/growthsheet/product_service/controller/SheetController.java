@@ -23,16 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 import com.growthsheet.product_service.dto.request.RejectRequest;
+import com.growthsheet.product_service.dto.request.ReportSheetRequest;
 
 import com.growthsheet.product_service.dto.request.CreateSheetRequest;
 import com.growthsheet.product_service.dto.response.DownloadResponse;
 import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
+import com.growthsheet.product_service.dto.response.SheetReportResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
 import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetLikeService;
+import com.growthsheet.product_service.service.SheetReportService;
 import com.growthsheet.product_service.service.SheetService;
 
 import org.springframework.data.domain.Pageable;
@@ -45,14 +48,17 @@ public class SheetController {
     private final SheetService sheetService;
     private final FileService fileService;
     private final SheetLikeService sheetLikeService;
+    private final SheetReportService sheetReportService;
 
     public SheetController(
             SheetService sheetService,
             FileService fileService,
-            SheetLikeService sheetLikeService) {
+            SheetLikeService sheetLikeService,
+            SheetReportService sheetReportService) {
         this.sheetService = sheetService;
         this.fileService = fileService;
         this.sheetLikeService = sheetLikeService;
+        this.sheetReportService = sheetReportService;
     }
 
     @GetMapping("/")
@@ -193,6 +199,110 @@ public class SheetController {
 
         sheetService.rejectSheet(sheetId, request.getComment());
         return ResponseEntity.ok("ปฏิเสธชีทเรียบร้อยแล้ว");
+    }
+
+    /**
+     * ดูประวัติการขอ publish sheet ของ seller (รอ admin อนุมัติ)
+     * GET /api/products/seller/sheet-applications?status=PENDING&page=0&size=10
+     *
+     * status: PENDING | APPROVED | REJECTED | null (ทั้งหมด)
+     */
+    @GetMapping("/seller/sheet-applications")
+    public ResponseEntity<Page<SheetCardResponse>> getSheetPublicationHistory(
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                sheetService.getSheetPublicationHistory(sellerId, status, page, size));
+    }
+
+    /**
+     * User กด report sheet พร้อมเหตุผล
+     * POST /api/products/{sheetId}/report
+     */
+    @PostMapping("/{sheetId}/report")
+    public ResponseEntity<SheetReportResponse> reportSheet(
+            @PathVariable UUID sheetId,
+            @RequestHeader("X-USER-ID") UUID userId,
+            @Valid @RequestBody ReportSheetRequest request) {
+
+        SheetReportResponse response = sheetReportService.reportSheet(sheetId, userId, request.getReason());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * ดึง report ทั้งหมด (สำหรับ admin เรียกผ่าน internal token)
+     * GET /api/products/reports?status=PENDING&page=0&size=10
+     */
+    @GetMapping("/reports")
+    public ResponseEntity<Page<SheetReportResponse>> getReports(
+            @RequestHeader("X-INTERNAL-TOKEN") String token,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (!internalServiceToken.equals(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(sheetReportService.getReports(status, page, size));
+    }
+
+    /**
+     * ดึง report ทั้งหมดของ sheet นั้น (สำหรับ admin เรียกผ่าน internal token)
+     * GET /api/products/{sheetId}/reports?page=0&size=10
+     */
+    @GetMapping("/{sheetId}/reports")
+    public ResponseEntity<Page<SheetReportResponse>> getReportsBySheet(
+            @RequestHeader("X-INTERNAL-TOKEN") String token,
+            @PathVariable UUID sheetId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (!internalServiceToken.equals(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(sheetReportService.getReportsBySheetId(sheetId, page, size));
+    }
+
+    /**
+     * Admin review report (อัปเดต status) ผ่าน internal token
+     * PATCH /api/products/reports/{reportId}/review
+     */
+    @PatchMapping("/reports/{reportId}/review")
+    public ResponseEntity<SheetReportResponse> reviewReport(
+            @RequestHeader("X-INTERNAL-TOKEN") String token,
+            @PathVariable UUID reportId,
+            @RequestParam String status,
+            @RequestParam(required = false) String adminNote,
+            @RequestParam(required = false) Boolean suspendSheet,
+            @RequestParam UUID adminId) {
+
+        if (!internalServiceToken.equals(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        com.growthsheet.product_service.entity.ReportStatus newStatus =
+                com.growthsheet.product_service.entity.ReportStatus.valueOf(status.toUpperCase());
+
+        return ResponseEntity.ok(
+                sheetReportService.reviewReport(reportId, adminId, newStatus, adminNote, suspendSheet));
+    }
+
+    /**
+     * ดึงชีทของ Seller ที่ถูกระงับ (โดนปิด publish แต่ว่าตัวชีทเคยอนุมัติไปแล้ว)
+     * GET /api/products/seller/suspended-sheets?page=0&size=10
+     */
+    @GetMapping("/seller/suspended-sheets")
+    public ResponseEntity<Page<SheetCardResponse>> getSuspendedSheets(
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(sheetService.getSuspendedSheets(sellerId, page, size));
     }
 
 }

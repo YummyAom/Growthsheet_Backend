@@ -93,4 +93,16 @@ public class OrderController {
         orderService.markAsPaid(orderId);
         return ResponseEntity.ok().build();
     }
+
+    // ===== ยกเลิก Order (ยกเลิกได้เฉพาะ PENDING) =====
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<java.util.Map<String, String>> cancelOrder(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable UUID orderId) {
+
+        orderService.cancelOrder(orderId, userId);
+        return ResponseEntity.ok(java.util.Map.of(
+                "status", "success",
+                "message", "ยกเลิก Order เรียบร้อยแล้ว"));
+    }
 }

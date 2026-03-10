@@ -113,4 +113,10 @@ public class UserController {
         userService.updateUserRole(userId, request.getRole());
         return "User role updated";
     }
+
+    // ===== ดึงข้อมูลธนาคารของ seller (สำหรับ internal service call) =====
+    @GetMapping("/{userId}/bank-info")
+    public java.util.Map<String, String> getSellerBankInfo(@PathVariable UUID userId) {
+        return userService.getSellerBankInfo(userId);
+    }
 }

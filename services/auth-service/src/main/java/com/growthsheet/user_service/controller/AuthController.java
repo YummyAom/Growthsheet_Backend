@@ -1,12 +1,15 @@
 package com.growthsheet.user_service.controller;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,8 +17,11 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.growthsheet.user_service.dto.requests.GoogleLoginRequest;
+import com.growthsheet.user_service.dto.requests.ChangePasswordRequest;
+import com.growthsheet.user_service.dto.requests.ForgotPasswordRequest;
 import com.growthsheet.user_service.dto.requests.LoginRequest;
 import com.growthsheet.user_service.dto.requests.RegisterRequest;
+import com.growthsheet.user_service.dto.requests.ResetPasswordRequest;
 import com.growthsheet.user_service.dto.requests.VerifyOtpRequest;
 import com.growthsheet.user_service.dto.response.AuthResponse;
 import com.growthsheet.user_service.service.AuthService;
@@ -111,4 +117,54 @@ public class AuthController {
                 "message", "OTP verified successfully");
     }
 
+    // ===== เปลี่ยนรหัสผ่าน (ต้อง login) =====
+    @PutMapping("/change-password")
+    public Map<String, String> changePassword(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @Valid @RequestBody ChangePasswordRequest req) {
+
+        authService.changePassword(userId, req);
+
+        return Map.of(
+                "status", "success",
+                "message", "เปลี่ยนรหัสผ่านสำเร็จ");
+    }
+
+    // ===== ลืมรหัสผ่าน (ไม่ต้อง login — ส่ง OTP ไป email) =====
+    @PostMapping("/forgot-password")
+    public Map<String, String> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest req) {
+
+        authService.forgotPassword(req.email());
+
+        return Map.of(
+                "status", "success",
+                "message", "ส่ง OTP ไปยัง email เรียบร้อยแล้ว");
+    }
+
+    // ===== Reset Password (ไม่ต้อง login — ยืนยัน OTP แล้วเปลี่ยนรหัส) =====
+    @PostMapping("/reset-password")
+    public Map<String, String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest req) {
+
+        authService.resetPassword(req);
+
+        return Map.of(
+                "status", "success",
+                "message", "เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบใหม่");
+    }
+
+    // ===== ลบบัญชี (Soft Delete — ต้อง login) =====
+    @DeleteMapping("/delete-account")
+    public Map<String, String> deleteAccount(
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        authService.deleteAccount(userId);
+
+        return Map.of(
+                "status", "success",
+                "message", "ลบบัญชีเรียบร้อยแล้ว");
+    }
+
 }
+
