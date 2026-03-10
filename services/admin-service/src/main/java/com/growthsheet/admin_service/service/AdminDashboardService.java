@@ -22,8 +22,9 @@ public class AdminDashboardService {
         Long totalSellers = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM seller_details", Long.class);
         Long totalSheets = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sheets", Long.class);
 
+        // จุดที่ 1: แก้เหลือแค่ 'PAID'
         BigDecimal totalRevenue = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(total_price), 0) FROM orders WHERE status IN ('PAID', 'SUCCESS', 'COMPLETED')",
+                "SELECT COALESCE(SUM(total_price), 0) FROM orders WHERE status = 'PAID'",
                 BigDecimal.class
         );
 
@@ -48,7 +49,7 @@ public class AdminDashboardService {
                 SELECT DATE(created_at) as date, COALESCE(SUM(total_price), 0) as revenue
                 FROM orders
                 WHERE created_at >= CURRENT_DATE - (? || ' days')::interval
-                AND status IN ('PAID', 'SUCCESS', 'COMPLETED')
+                AND status = 'PAID'
                 GROUP BY DATE(created_at)
                 ORDER BY DATE(created_at) ASC;
                 """;
@@ -93,17 +94,15 @@ public class AdminDashboardService {
     }
 
     public List<DashboardDTOs.TopSellerResponse> getTopSellers(UUID adminId, int limit) {
+        // จุดที่ 2: ใช้ Query ที่ดึง seller_name จาก order_items โดยตรง และเช็คสถานะเป็น 'PAID'
         String sql = """
-                SELECT s.user_id as seller_id,
-                       s.pen_name as seller_name,
+                SELECT oi.seller_name as seller_name,
                        COUNT(oi.id) as sales,
                        COALESCE(SUM(oi.price), 0) as revenue
-                FROM seller_details s
-                JOIN sheets sh ON s.user_id = sh.seller_id
-                JOIN order_items oi ON sh.id = oi.sheet_id
+                FROM order_items oi
                 JOIN orders o ON oi.order_id = o.id
-                WHERE o.status IN ('PAID', 'SUCCESS', 'COMPLETED')
-                GROUP BY s.user_id, s.pen_name
+                WHERE o.status = 'PAID'
+                GROUP BY oi.seller_name
                 ORDER BY revenue DESC
                 LIMIT ?;
                 """;
@@ -111,7 +110,7 @@ public class AdminDashboardService {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> DashboardDTOs.TopSellerResponse.builder()
-                        .sellerId((UUID) rs.getObject("seller_id"))
+                        .sellerId(UUID.randomUUID()) // ใส่ค่าสุ่มให้ครบโครงสร้าง DTO
                         .sellerName(rs.getString("seller_name"))
                         .sales(rs.getLong("sales"))
                         .revenue(rs.getBigDecimal("revenue"))
@@ -121,13 +120,14 @@ public class AdminDashboardService {
     }
 
     public List<DashboardDTOs.TopSheetResponse> getTopSheets(UUID adminId, int limit) {
+        // จุดที่ 3: แก้เหลือแค่ 'PAID'
         String sql = """
                 SELECT oi.sheet_id as sheet_id,
                        oi.sheet_name as title,
                        COUNT(oi.id) as sales
                 FROM order_items oi
                 JOIN orders o ON oi.order_id = o.id
-                WHERE o.status IN ('PAID', 'SUCCESS', 'COMPLETED')
+                WHERE o.status = 'PAID'
                 GROUP BY oi.sheet_id, oi.sheet_name
                 ORDER BY sales DESC
                 LIMIT ?;
