@@ -324,7 +324,9 @@ public class AuthService {
                                                 "token_type", "bearer",
                                                 "expires_in", TOKEN_TTL.getSeconds(),
                                                 "session_token", sessionToken,
-                                                "refresh_token", refreshToken));
+                                                "refresh_token", refreshToken))
+                                ;
+        }
         // ===== เปลี่ยนรหัสผ่าน =====
         public void changePassword(UUID userId, ChangePasswordRequest req) {
                 User user = userRepo.findById(userId)
