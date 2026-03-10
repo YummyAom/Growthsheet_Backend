@@ -72,22 +72,10 @@ public class SheetAdminController {
             @PathVariable UUID sheetId,
             @RequestHeader("X-USER-ID") UUID adminId) {
 
-        // 1. ดึงข้อมูล sheet
         var sheet = productClient.getSheetById(sheetId);
+
         UUID sellerId = sheet.getSeller().getId();
-
-        // 2. ดึง URL PDF
-        DownloadResponse download = productClient.adminDownload(sheetId);
-        String fileUrl = download.fileUrl();
-
-        // 3. approve sheet ใน product-service
-        // productClient.approveSheet(sheetId, "INTERNAL_SECRET_TOKEN");
-
-        // 4. บันทึก log admin
-        // sheetAdminService.approve(sheetId, adminId, sellerId);
-
-        // 5. ส่งไป AI วิเคราะห์
-        analysisClient.analyzeSheet(fileUrl, sheetId.toString());
+        sheetAdminService.approve(sheetId, adminId, sellerId);
 
         return "อนุมัติชีทเรียบร้อยแล้ว";
     }
