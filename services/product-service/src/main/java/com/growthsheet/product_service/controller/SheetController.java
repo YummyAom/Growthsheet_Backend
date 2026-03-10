@@ -1,7 +1,5 @@
 package com.growthsheet.product_service.controller;
 
-import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +29,6 @@ import com.growthsheet.product_service.dto.response.ProductResponseDTO;
 import com.growthsheet.product_service.dto.response.SheetCardResponse;
 import com.growthsheet.product_service.dto.response.SheetReportResponse;
 import com.growthsheet.product_service.dto.response.SheetResponse;
-import com.growthsheet.product_service.entity.Sheet;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.service.FileService;
 import com.growthsheet.product_service.service.SheetLikeService;
@@ -119,6 +116,12 @@ public class SheetController {
 
         return ResponseEntity.ok(
                 sheetService.getDownloadInfo(id, userId));
+    }
+
+    @GetMapping("{sheetId}/adminDowload")
+    public ResponseEntity<DownloadResponse> adminDownload(
+            @PathVariable UUID sheetId) {
+        return ResponseEntity.ok(sheetService.getDownloadInfoAdmin(sheetId));
     }
 
     @GetMapping

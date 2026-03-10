@@ -161,8 +161,8 @@ public class SheetService {
 
                 sheet.setCategory(category);
                 sheet.setSellerId(sellerId);
-                sheet.setStatus(SheetStatus.APPROVED);
-                sheet.setIsPublished(true);
+                sheet.setStatus(SheetStatus.PENDING);
+                sheet.setIsPublished(false);
 
                 sheet.setHashtags(
                                 hashtagService.resolveHashtags(req.hashtags()));
@@ -255,6 +255,31 @@ public class SheetService {
                                 sheet.getFileUrl(),
                                 sheet.getTitle());
         }
+
+        public DownloadResponse getDownloadInfoAdmin(UUID sheetId) {
+
+                Sheet sheet = sheetRepo.findById(sheetId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Sheet not found"));
+
+                if (!sheet.getIsPublished() || sheet.getStatus() != SheetStatus.APPROVED) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        "Sheet is not available");
+                }
+
+                if (sheet.getFileUrl() == null) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                        "File not available");
+                }
+
+                return new DownloadResponse(
+                                sheet.getFileUrl(),
+                                sheet.getTitle());
+        }
+
 
         public Page<SheetCardResponse> getSheets(
                         int page,
