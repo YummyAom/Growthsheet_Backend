@@ -17,6 +17,10 @@ public class SellerDashboardService {
     private final OrderItemRepository orderItemRepository;
     private final WithdrawalService withdrawalService;
 
+    public Long getTotalSalesVolume(UUID sellerId) {
+        return orderItemRepository.calculateTotalSalesVolumeBySellerId(sellerId);
+    }
+
     /**
      * ดึงข้อมูล dashboard สำหรับ seller
      * รวมยอดขาย, รายได้, รูปแบบชีทที่ขายได้ และยอดที่ถอนได้

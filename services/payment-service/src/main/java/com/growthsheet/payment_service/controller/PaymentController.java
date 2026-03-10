@@ -12,6 +12,7 @@ import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.OrderResponse;
 import com.growthsheet.payment_service.dto.OrderWithPaymentResponse;
 import com.growthsheet.payment_service.entity.Payment;
+import com.growthsheet.payment_service.repository.OrderItemRepository;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.service.PaymentService;
 import com.stripe.model.Event;
@@ -28,6 +29,7 @@ public class PaymentController {
     private final OrderClient orderClient;
 
     private final PaymentRepository paymentRepo;
+    private final OrderItemRepository orderItemRepo;
     private final NotificationClient notificaiton;
     @Value("${stripe.webhook.secret}")
     private String endpointSecret;
@@ -35,6 +37,20 @@ public class PaymentController {
     @GetMapping("/")
     public String getHello() {
         return "hello payment";
+    }
+
+    @GetMapping("/sellers/{sellerId}/sales-volume")
+    public ResponseEntity<?> getSellerSalesVolume(@PathVariable UUID sellerId) {
+        try {
+            Long totalSalesVolume = orderItemRepo.calculateTotalSalesVolumeBySellerId(sellerId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "salesVolume", totalSalesVolume
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     @PostMapping("/testNoti")
