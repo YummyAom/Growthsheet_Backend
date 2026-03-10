@@ -118,7 +118,7 @@ public class SheetController {
                 sheetService.getDownloadInfo(id, userId));
     }
 
-    @GetMapping("{sheetId}/adminDowload")
+    @GetMapping("{sheetId}/adminDownload")
     public ResponseEntity<DownloadResponse> adminDownload(
             @PathVariable UUID sheetId) {
         return ResponseEntity.ok(sheetService.getDownloadInfoAdmin(sheetId));
