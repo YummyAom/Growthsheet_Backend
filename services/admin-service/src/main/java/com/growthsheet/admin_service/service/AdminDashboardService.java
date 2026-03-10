@@ -151,11 +151,13 @@ public class AdminDashboardService {
                 "SELECT COUNT(*) FROM withdrawal_requests WHERE status = 'PENDING'", Long.class);
         Long sellerApplications = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM seller_details WHERE is_verified = 'PENDING'", Long.class);
-
+        Long pendingSheets = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM sheets WHERE status = 'PENDING'", Long.class);
         return DashboardDTOs.PendingActionsResponse.builder()
                 .reports(reports)
                 .withdrawRequests(withdrawRequests)
                 .sellerApplications(sellerApplications)
+                .sheets(pendingSheets)
                 .build();
     }
 

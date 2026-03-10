@@ -18,6 +18,7 @@ public class DashboardDTOs {
         private BigDecimal totalRevenue;
         private Long pendingReports;
         private Long pendingWithdrawals;
+        private Long pendingSheets;
     }
 
     @Getter @Setter @Builder
@@ -63,6 +64,7 @@ public class DashboardDTOs {
         private Long reports;
         private Long withdrawRequests;
         private Long sellerApplications;
+        private Long sheets;
     }
 
     @Getter @Setter @Builder
