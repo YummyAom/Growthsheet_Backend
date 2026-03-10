@@ -3,11 +3,17 @@ package com.growthsheet.product_service.controller;
 import java.util.List;
 import java.util.UUID;
 import jakarta.validation.Valid; // สำหรับตรวจสอบ @NotBlank, @NotNull
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 import org.springframework.web.bind.annotation.*;
 
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
 import com.growthsheet.product_service.dto.response.PendingReviewResponse;
-import com.growthsheet.product_service.dto.response.ReviewResponse;
+import com.growthsheet.product_service.dto.response.ReviewResponse; 
+import com.growthsheet.product_service.dto.response.SellerReviewResponse;
 import com.growthsheet.product_service.service.ReviewService;
 
 @RestController
@@ -60,5 +66,14 @@ public class SheetReviewController {
     public List<PendingReviewResponse> getPenddingReview(
             @RequestHeader("X-USER-ID") UUID userId) {
         return reviewService.getPendingReviews(userId);
+    }
+
+    @GetMapping("/reviews/seller")
+    public Page<SellerReviewResponse> getSellerReviews(
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return reviewService.getReviewsBySeller(sellerId, pageable);
     }
 }

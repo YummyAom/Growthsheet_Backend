@@ -6,6 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +26,9 @@ import com.growthsheet.product_service.dto.request.SheetImageRequest;
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
 import com.growthsheet.product_service.dto.response.PendingReviewResponse;
 import com.growthsheet.product_service.dto.response.ReviewResponse;
+import com.growthsheet.product_service.dto.response.SellerReviewResponse;
+import com.growthsheet.product_service.entity.Sheet;
+import com.growthsheet.product_service.entity.SheetImage;
 import com.growthsheet.product_service.entity.SheetReview;
 import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetImageRepository;
@@ -88,11 +97,8 @@ public class ReviewService {
         List<SheetReview> reviews = reviewRepo.findBySheetId(sheetId);
 
         return reviews.stream().map(review -> {
-            String userName = "Unknown User";
             UserProfileResponse user = userClient.getUserById(review.getUserId());
-            if (user != null) {
-                userName = user.getName();
-            }
+
             return new ReviewResponse(
                     review.getId(),
                     review.getSheetId(),
@@ -104,6 +110,47 @@ public class ReviewService {
                     review.getRating(),
                     review.getCreatedAt());
         }).toList();
+    }
+
+    public Page<SellerReviewResponse> getReviewsBySeller(UUID sellerId, Pageable pageable) {
+
+        List<UUID> sheetIds = sheetRepo.findBySellerId(sellerId)
+                .stream()
+                .map(Sheet::getId)
+                .toList();
+
+        if (sheetIds.isEmpty()) {
+            return Page.empty();
+        }
+
+        // Map sheetId -> Sheet ไว้ก่อนเพื่อไม่ต้อง query ซ้ำในแต่ละ review
+        Map<UUID, Sheet> sheetMap = sheetRepo.findBySellerId(sellerId)
+                .stream()
+                .collect(Collectors.toMap(Sheet::getId, s -> s));
+
+        return reviewRepo.findBySheetIdIn(sheetIds, pageable)
+                .map(review -> {
+                    Sheet sheet = sheetMap.get(review.getSheetId());
+
+                    String thumbnailUrl = sheetImageRepo
+                            .findFirstBySheetIdOrderBySortOrderAsc(review.getSheetId())
+                            .map(SheetImage::getImageUrl)
+                            .orElse(null);
+
+                    UserProfileResponse reviewer = userClient.getUserById(review.getUserId());
+
+                    return new SellerReviewResponse(
+                            review.getSheetId(),
+                            sheet != null ? sheet.getTitle() : "Unknown Sheet",
+                            thumbnailUrl,
+                            review.getId(),
+                            review.getRating(),
+                            review.getComment(),
+                            review.getCreatedAt(),
+                            review.getUserId(),
+                            reviewer != null ? reviewer.getName() : "Unknown User",
+                            reviewer != null ? reviewer.getUserPhotoUrl() : null);
+                });
     }
 
     @Transactional
