@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,6 +76,9 @@ public interface ProductClient {
                         @RequestParam(required = false) String adminNote,
                         @RequestParam(required = false) Boolean suspendSheet,
                         @RequestParam UUID adminId);
+
+        @GetMapping("/products/{sheetId}/adminDownload")
+        ResponseEntity<DownloadResponse> adminDownload(@PathVariable UUID sheetId);
 
 }
 

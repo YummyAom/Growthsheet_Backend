@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,8 @@ public class SheetAdminController {
     private final ProductClient productClient;
     private final SheetReviewLogRepository logRepository;
     private final AnalysisClient analysisClient;
+    @Value("${admin.server.url}")
+    private String adminServerUrl;
 
     @GetMapping("")
     public String getHello() {
@@ -73,10 +76,13 @@ public class SheetAdminController {
             @RequestHeader("X-USER-ID") UUID adminId) {
 
         var sheet = productClient.getSheetById(sheetId);
-
+        String adminDownload = productClient.adminDownload(sheetId).getBody().fileUrl();
         UUID sellerId = sheet.getSeller().getId();
         sheetAdminService.approve(sheetId, adminId, sellerId);
-
+        analysisClient.analyzeSheet(
+                adminDownload,
+                sheetId.toString(),
+                adminServerUrl + "/webhook/analysis");
         return "อนุมัติชีทเรียบร้อยแล้ว";
     }
 

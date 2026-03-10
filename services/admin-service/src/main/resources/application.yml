@@ -34,6 +34,11 @@ order:
   service: 
     url: ${ORDER_SERVICE_URL}
 
+admin:
+  server:
+    url: ${ADMIN_SERVICE_URL}
+
+
 omise:
   public_key: ${PKEY_OMISE}
   secret_key: ${SKEY_OMISE}
