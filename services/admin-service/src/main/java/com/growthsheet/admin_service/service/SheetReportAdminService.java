@@ -40,7 +40,7 @@ public class SheetReportAdminService {
     /**
      * Admin ตรวจสอบ report แล้ว - อัปเดตสถานะ (REVIEWED หรือ DISMISSED)
      */
-    public SheetReportResponse reviewReport(UUID reportId, UUID adminId, String status, String adminNote) {
-        return productClient.reviewReport(internalServiceToken, reportId, status, adminNote, adminId);
+    public SheetReportResponse reviewReport(UUID reportId, UUID adminId, String status, String adminNote, Boolean suspendSheet) {
+        return productClient.reviewReport(internalServiceToken, reportId, status, adminNote, suspendSheet, adminId);
     }
 }

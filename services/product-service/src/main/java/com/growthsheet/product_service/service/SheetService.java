@@ -487,4 +487,20 @@ public class SheetService {
 
                 return sheets.map(sheetAssembler::assemble);
         }
+
+        /**
+         * ดูชีทของ Seller ที่ถูกระบบระงับ (คือ status=APPROVED แต่ isPublished=false)
+         */
+        public Page<SheetCardResponse> getSuspendedSheets(UUID sellerId, int page, int size) {
+                Pageable pageable = PageRequest.of(
+                        page,
+                        size,
+                        Sort.by(Sort.Direction.DESC, "updatedAt"));
+
+                return sheetRepo.findAllBySellerIdAndStatusAndIsPublishedFalse(
+                                sellerId, 
+                                SheetStatus.APPROVED, 
+                                pageable)
+                        .map(sheetAssembler::assemble);
+        }
 }

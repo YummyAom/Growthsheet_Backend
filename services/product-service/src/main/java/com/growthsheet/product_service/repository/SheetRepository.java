@@ -90,6 +90,12 @@ public interface SheetRepository extends JpaRepository<Sheet, UUID> {
             SheetStatus status,
             Pageable pageable);
 
+    // เลสสำหรับหาชีทที่ถูกระงับ (status เป็น APPROVED แต่ถูกปิด publish)
+    Page<Sheet> findAllBySellerIdAndStatusAndIsPublishedFalse(
+            UUID sellerId,
+            SheetStatus status,
+            Pageable pageable);
+
     @Query("""
                 SELECT s
                 FROM Sheet s

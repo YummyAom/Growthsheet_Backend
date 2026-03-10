@@ -70,7 +70,8 @@ public class SheetReportAdminController {
                 reportId,
                 adminId,
                 request.getStatus(),
-                request.getAdminNote()
+                request.getAdminNote(),
+                request.getSuspendSheet()
         );
 
         return ResponseEntity.ok(response);

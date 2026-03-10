@@ -12,5 +12,6 @@ public record SheetReportResponse(
     UUID adminId,
     String adminNote,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
+    LocalDateTime updatedAt,
+    String fileUrl
 ) {}

@@ -11,4 +11,5 @@ import lombok.Setter;
 public class ReviewReportRequest {
     private String status;    // REVIEWED หรือ DISMISSED
     private String adminNote; // หมายเหตุจาก admin (optional)
+    private Boolean suspendSheet; // ถ้าระบุเป็น true จะทำการปรับชีทให้ไม่เป็น public
 }

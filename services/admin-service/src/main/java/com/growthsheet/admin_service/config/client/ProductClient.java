@@ -74,6 +74,7 @@ public interface ProductClient {
                         @PathVariable UUID reportId,
                         @RequestParam String status,
                         @RequestParam(required = false) String adminNote,
+                        @RequestParam(required = false) Boolean suspendSheet,
                         @RequestParam UUID adminId);
 
 }

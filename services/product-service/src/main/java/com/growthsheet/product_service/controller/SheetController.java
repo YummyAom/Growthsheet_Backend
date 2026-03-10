@@ -278,6 +278,7 @@ public class SheetController {
             @PathVariable UUID reportId,
             @RequestParam String status,
             @RequestParam(required = false) String adminNote,
+            @RequestParam(required = false) Boolean suspendSheet,
             @RequestParam UUID adminId) {
 
         if (!internalServiceToken.equals(token)) {
@@ -288,7 +289,20 @@ public class SheetController {
                 com.growthsheet.product_service.entity.ReportStatus.valueOf(status.toUpperCase());
 
         return ResponseEntity.ok(
-                sheetReportService.reviewReport(reportId, adminId, newStatus, adminNote));
+                sheetReportService.reviewReport(reportId, adminId, newStatus, adminNote, suspendSheet));
+    }
+
+    /**
+     * ดึงชีทของ Seller ที่ถูกระงับ (โดนปิด publish แต่ว่าตัวชีทเคยอนุมัติไปแล้ว)
+     * GET /api/products/seller/suspended-sheets?page=0&size=10
+     */
+    @GetMapping("/seller/suspended-sheets")
+    public ResponseEntity<Page<SheetCardResponse>> getSuspendedSheets(
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(sheetService.getSuspendedSheets(sellerId, page, size));
     }
 
 }

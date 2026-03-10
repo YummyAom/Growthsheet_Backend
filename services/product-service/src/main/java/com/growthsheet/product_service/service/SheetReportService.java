@@ -86,7 +86,7 @@ public class SheetReportService {
      * Admin ตรวจสอบ report แล้ว - อัปเดต status
      */
     @Transactional
-    public SheetReportResponse reviewReport(UUID reportId, UUID adminId, ReportStatus newStatus, String adminNote) {
+    public SheetReportResponse reviewReport(UUID reportId, UUID adminId, ReportStatus newStatus, String adminNote, Boolean suspendSheet) {
         SheetReport report = reportRepo.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ไม่พบ report นี้"));
 
@@ -96,10 +96,25 @@ public class SheetReportService {
 
         reportRepo.save(report);
 
+        // ตัดสินใจระงับชีทหากมีการส่ง suspendSheet = true
+        if (Boolean.TRUE.equals(suspendSheet)) {
+            com.growthsheet.product_service.entity.Sheet sheet = sheetRepo.findById(report.getSheetId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ไม่พบชีทนี้"));
+            
+            sheet.setIsPublished(false);
+            sheetRepo.save(sheet);
+        }
+
         return toResponse(report);
     }
 
     private SheetReportResponse toResponse(SheetReport report) {
+        String fileUrl = null;
+        com.growthsheet.product_service.entity.Sheet sheet = sheetRepo.findById(report.getSheetId()).orElse(null);
+        if (sheet != null) {
+            fileUrl = sheet.getFileUrl();
+        }
+
         return new SheetReportResponse(
                 report.getId(),
                 report.getSheetId(),
@@ -109,7 +124,8 @@ public class SheetReportService {
                 report.getAdminId(),
                 report.getAdminNote(),
                 report.getCreatedAt(),
-                report.getUpdatedAt()
+                report.getUpdatedAt(),
+                fileUrl
         );
     }
 }
