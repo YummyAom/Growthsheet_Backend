@@ -70,8 +70,7 @@ public class SheetService {
                         SheetAssembler sheetAssembler,
                         SheetCardMapper sheetCardMapper,
                         OrderClient orderClient,
-                        HashtagRepository hashtagRepository
-                ) {
+                        HashtagRepository hashtagRepository) {
                 this.sheetRepo = sheetRepo;
                 this.categoryRepo = categoryRepo;
                 this.hashtagService = hashtagService;
@@ -129,6 +128,7 @@ public class SheetService {
                                 orderPage.getTotalPages(),
                                 orderPage.isLast());
         }
+
         @Transactional
         public List<String> getAllTags() {
                 return hashtagRepository.findAllTagNames();
@@ -279,7 +279,6 @@ public class SheetService {
                                 sheet.getFileUrl(),
                                 sheet.getTitle());
         }
-
 
         public Page<SheetCardResponse> getSheets(
                         int page,
@@ -488,7 +487,6 @@ public class SheetService {
 
         /**
          * ดูประวัติการขอ publish sheet ของ seller
-         * สามารถกรองตาม status ได้ (PENDING, APPROVED, REJECTED) หรือ null = ทั้งหมด
          */
         public Page<SheetCardResponse> getSheetPublicationHistory(
                         UUID sellerId,
@@ -510,7 +508,40 @@ public class SheetService {
                         sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
                 }
 
-                return sheets.map(sheetAssembler::assemble);
+                // === ส่วนที่เพิ่มเข้ามาใหม่เพื่อดึงยอดขาย ===
+
+                // 1. ดึง ID ของชีททั้งหมดในหน้านี้
+                List<UUID> sheetIds = sheets.getContent().stream()
+                                .map(Sheet::getId)
+                                .toList();
+
+                // 2. ไปถาม Payment Service ผ่าน FeignClient (OrderClient)
+                java.util.Map<UUID, Long> salesCountMap = new java.util.HashMap<>();
+                if (!sheetIds.isEmpty()) {
+                        try {
+                                // *** ตรงนี้คุณต้องไปเพิ่มเมธอด getSalesCountsBySheetIds ใน OrderClient
+                                // ก่อนนะครับ ***
+                                salesCountMap = orderClient.getSalesCountsBySheetIds(sheetIds);
+                        } catch (Exception e) {
+                                // ถ้า Payment Service ล่ม หรือยิงไม่ผ่าน ก็ปล่อยผ่านไปก่อน (หน้าเว็บจะได้ไม่พัง
+                                // แค่ยอดโชว์เป็น 0)
+                                System.err.println("ไม่สามารถดึงยอดขายจาก Payment Service ได้: " + e.getMessage());
+                        }
+                }
+
+                // 3. ประกอบร่าง DTO และยัดยอดขายเข้าไป
+                final java.util.Map<UUID, Long> finalSalesCountMap = salesCountMap; // ทำเป็น final เพื่อใช้ใน lambda
+
+                return sheets.map(sheet -> {
+                        // ใช้ assembler เดิมสร้าง response ที่มี salesCount = 0
+                        SheetCardResponse baseResponse = sheetAssembler.assemble(sheet);
+
+                        // ดึงตัวเลขจาก Map มาใส่
+                        Long count = finalSalesCountMap.getOrDefault(sheet.getId(), 0L);
+
+                        // ใช้ withSalesCount เพื่อสร้าง record ใหม่ที่อัปเดตยอดขายแล้ว
+                        return baseResponse.withSalesCount(count.intValue());
+                });
         }
 
         /**
@@ -518,14 +549,14 @@ public class SheetService {
          */
         public Page<SheetCardResponse> getSuspendedSheets(UUID sellerId, int page, int size) {
                 Pageable pageable = PageRequest.of(
-                        page,
-                        size,
-                        Sort.by(Sort.Direction.DESC, "updatedAt"));
+                                page,
+                                size,
+                                Sort.by(Sort.Direction.DESC, "updatedAt"));
 
                 return sheetRepo.findAllBySellerIdAndStatusAndIsPublishedFalse(
-                                sellerId, 
-                                SheetStatus.APPROVED, 
+                                sellerId,
+                                SheetStatus.APPROVED,
                                 pageable)
-                        .map(sheetAssembler::assemble);
+                                .map(sheetAssembler::assemble);
         }
 }

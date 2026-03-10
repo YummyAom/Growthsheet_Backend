@@ -113,4 +113,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     List<MonthlySalesProjection> getMonthlySalesBySellerId(
             @Param("sellerId") UUID sellerId,
             @Param("since") LocalDateTime since);
+
+    @Query("SELECT o.sheetId, COUNT(o.id) FROM OrderItem o WHERE o.sheetId IN :sheetIds GROUP BY o.sheetId")
+    List<Object[]> countSalesBySheetIds(@Param("sheetIds") List<UUID> sheetIds);
 }
