@@ -12,19 +12,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@FeignClient(name = "payment-service")
+@FeignClient(name = "payment-service",
+        url = "${GATEWAY_SERVICE_URL}"
+)
 public interface PaymentClient {
-
-    @GetMapping("/refunds/admin/pending")
+    @GetMapping("/payments/refunds/admin/pending")
     ResponseEntity<List<Map<String, Object>>> getPendingRefunds(@RequestHeader("X-USER-ID") UUID adminId);
 
-    @PatchMapping("/refunds/admin/{refundId}/approve")
+    @PatchMapping("/payments/refunds/admin/{refundId}/approve")
     ResponseEntity<Map<String, Object>> approveRefund(
             @RequestHeader("X-USER-ID") UUID adminId,
             @PathVariable("refundId") UUID refundId,
             @RequestBody Map<String, Object> req);
 
-    @PatchMapping("/refunds/admin/{refundId}/reject")
+    @PatchMapping("/payments/refunds/admin/{refundId}/reject")
     ResponseEntity<Map<String, Object>> rejectRefund(
             @RequestHeader("X-USER-ID") UUID adminId,
             @PathVariable("refundId") UUID refundId,

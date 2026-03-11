@@ -12,13 +12,21 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/refunds")
+@RequestMapping("/api/payments/refunds")
 public class RefundController {
 
     private final RefundService refundService;
 
     public RefundController(RefundService refundService) {
         this.refundService = refundService;
+    }
+
+    // 🌟 เพิ่ม Endpoint สำหรับดูรายละเอียดและติดตามสถานะ Refund รายตัว (สำหรับ User)
+    @GetMapping("/{refundId}")
+    public ResponseEntity<RefundResponseDto> getRefundStatus(
+            @RequestHeader("X-USER-ID") UUID userId,
+            @PathVariable UUID refundId) {
+        return ResponseEntity.ok(refundService.getRefundById(refundId, userId));
     }
 
     @PostMapping

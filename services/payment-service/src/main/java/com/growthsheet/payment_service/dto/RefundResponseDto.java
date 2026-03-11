@@ -7,6 +7,8 @@ import com.growthsheet.payment_service.entity.RefundStatus;
 
 @Data
 public class RefundResponseDto {
+    private String sheetName;
+    private String sheetFileUrl;
     private UUID id;
     private UUID orderItemId;
     private UUID userId;

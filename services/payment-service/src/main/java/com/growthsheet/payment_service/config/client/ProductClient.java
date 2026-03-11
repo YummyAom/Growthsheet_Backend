@@ -11,18 +11,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "product-service", url = "${GATEWAY_SERVICE_URL}")
 public interface ProductClient {
-    @GetMapping("/products/{id}") 
+    @GetMapping("/products/{id}")
     ProductResponse getSheetById(@PathVariable("id") UUID id);
+
+    @GetMapping("/products/{sheetId}/adminDownload")
+    DownloadResponse adminDownload(@PathVariable("sheetId") UUID sheetId);
 }
 
+// Record สำหรับรับค่า
 record ProductResponse(
-    UUID id,
-    String title,
-    SellerInfo seller, 
-    BigDecimal price
-) {
-    public record SellerInfo(
         UUID id,
-        String name
-    ) {}
+        String title,
+        SellerInfo seller,
+        BigDecimal price) {
+    public record SellerInfo(UUID id, String name) {
+    }
 }

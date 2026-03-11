@@ -4,6 +4,7 @@ import com.growthsheet.payment_service.dto.ApproveRefundDto;
 import com.growthsheet.payment_service.dto.CreateRefundRequestDto;
 import com.growthsheet.payment_service.dto.RefundResponseDto;
 import com.growthsheet.payment_service.dto.RejectRefundDto;
+import com.growthsheet.payment_service.config.client.DownloadResponse;
 import com.growthsheet.payment_service.entity.OrderItem;
 import com.growthsheet.payment_service.entity.RefundRequest;
 import com.growthsheet.payment_service.entity.RefundStatus;
@@ -11,6 +12,8 @@ import com.growthsheet.payment_service.repository.OrderItemRepository;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.growthsheet.payment_service.repository.RefundRequestRepository;
 import com.growthsheet.payment_service.config.client.OrderClient;
+import com.growthsheet.payment_service.config.client.ProductClient;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.growthsheet.payment_service.entity.Payment;
@@ -27,15 +30,30 @@ public class RefundService {
     private final OrderItemRepository orderItemRepo;
     private final OrderClient orderClient;
     private final PaymentRepository paymentRepo;
+    private final ProductClient productClient;
 
     public RefundService(RefundRequestRepository refundRepo,
             OrderItemRepository orderItemRepo,
             PaymentRepository paymentRepo,
-            OrderClient orderClient) {
+            OrderClient orderClient,
+            ProductClient productClient) {
         this.refundRepo = refundRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
         this.orderClient = orderClient;
+        this.productClient = productClient;
+    }
+
+    public RefundResponseDto getRefundById(UUID refundId, UUID userId) {
+        RefundRequest refund = refundRepo.findById(refundId)
+                .orElseThrow(() -> new RuntimeException("Refund request not found"));
+
+        // ป้องกันไม่ให้ดูของคนอื่น
+        if (!refund.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized: You cannot view this refund request.");
+        }
+
+        return mapToDto(refund);
     }
 
     @Transactional
@@ -146,6 +164,7 @@ public class RefundService {
         return mapToDto(saved);
     }
 
+    // 🌟 อัปเดต mapToDto ให้ไปดึง PDF ลิงก์มาด้วย
     public RefundResponseDto mapToDto(RefundRequest req) {
         RefundResponseDto dto = new RefundResponseDto();
         dto.setId(req.getId());
@@ -162,6 +181,22 @@ public class RefundService {
         dto.setAdminComment(req.getAdminComment());
         dto.setCreatedAt(req.getCreatedAt());
         dto.setUpdatedAt(req.getUpdatedAt());
+
+        // ไปดึงชื่อชีท และลิงก์ PDF มาแสดง
+        orderItemRepo.findById(req.getOrderItemId()).ifPresent(item -> {
+            dto.setSheetName(item.getSheetName());
+            try {
+                DownloadResponse dl = productClient.adminDownload(item.getSheetId());
+                if (dl != null) {
+                    dto.setSheetFileUrl(dl.fileUrl());
+                    dto.setSheetName(dl.sheetName());
+                }
+            } catch (Exception e) {
+                System.err.println("ไม่สามารถดึงข้อมูลไฟล์ PDF จาก Product Service ได้: " + e.getMessage());
+            }
+        });
+
         return dto;
     }
+
 }
