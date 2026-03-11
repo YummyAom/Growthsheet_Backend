@@ -29,12 +29,6 @@ public class NotificationService {
             String title,
             String message) {
 
-        System.out.println("===== CREATE NOTIFICATION =====");
-       
-        System.out.println("userId = " + userId);
-        System.out.println("title = " + title);
-        System.out.println("message = " + message);
-
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setTitle(title);
@@ -44,16 +38,12 @@ public class NotificationService {
 
         notificationRepo.save(notification);
 
-        System.out.println("Notification saved with id = " + notification.getId());
-
-        System.out.println("Sending WS to user = " + userId);
-
         messagingTemplate.convertAndSendToUser(
                 userId.toString(),
                 "/queue/notifications",
                 notification);
 
-        System.out.println("WS send completed");
+        // System.out.println("WS send completed");
 
         return notification;
     }

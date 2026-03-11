@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
+import com.growthsheet.notificaiton.dto.NotificationRequest;
 import com.growthsheet.notificaiton.entity.Notification;
 import com.growthsheet.notificaiton.service.NotificationService;
 
@@ -21,11 +22,9 @@ public class NotificationController {
     // ===== create notification (internal call เช่น จาก payment-service) =====
     @PostMapping
     public Notification createNotification(
-            @RequestHeader("X-USER-ID") UUID userId,
-            @RequestParam String title,
-            @RequestParam String message
-    ) {
-        return notificationService.create(userId, title, message);
+            @RequestBody NotificationRequest noti
+        ) {
+        return notificationService.create(noti.getUserId(), noti.getTitle(), noti.getMessage());
     }
 
     // ===== get notifications (history) =====
@@ -37,8 +36,7 @@ public class NotificationController {
 
         return notificationService.getUserNotifications(
                 userId,
-                PageRequest.of(page, size)
-        );
+                PageRequest.of(page, size));
     }
 
     // ===== unread count =====
