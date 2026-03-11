@@ -201,7 +201,7 @@ public class SheetService {
                                                 HttpStatus.NOT_FOUND,
                                                 "Sheet not found"));
 
-                if (!sheet.getIsPublished() || sheet.getStatus() != SheetStatus.APPROVED) {
+                if (sheet.getStatus() != SheetStatus.APPROVED) {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
                                         "Sheet is not available");
