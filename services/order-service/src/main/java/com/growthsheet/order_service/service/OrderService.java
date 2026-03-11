@@ -41,10 +41,19 @@ public class OrderService {
     }
 
     public boolean hasPurchased(UUID userId, UUID sheetId) {
-        return orderRepo.existsByUserIdAndItemsSheetIdAndStatus(
-                userId,
-                sheetId,
-                "PAID");
+
+        List<Order> paidOrders = orderRepo.findByUserIdAndStatus(userId, "PAID");
+
+        for (Order order : paidOrders) {
+            for (OrderItem item : order.getItems()) {
+                // ถ้าเจอ sheetId ที่ตรงกัน และยังไม่ได้ถูก refund แปลว่ายังมีสิทธิ์อยู่
+                if (item.getSheetId().equals(sheetId) &&
+                        (item.getIsRefunded() == null || !item.getIsRefunded())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // แก้ไข Return Type เป็น OrderResponse
@@ -99,10 +108,17 @@ public class OrderService {
     }
 
     public PageResponse<OrderResponse> getPaidOrdersByUser(UUID userId, Pageable pageable) {
-
         Page<OrderResponse> page = orderRepo
                 .findByUserIdAndStatus(userId, "PAID", pageable)
-                .map(this::mapToResponse);
+                .map(order -> {
+                    OrderResponse res = mapToResponse(order);
+                    // กรองเอาเฉพาะ item ที่ 'ยังไม่ถูก refund' ไปแสดงในคลัง
+                    List<OrderResponse.Item> activeItems = res.getItems().stream()
+                            .filter(item -> item.getIsRefunded() == null || !item.getIsRefunded())
+                            .toList();
+                    res.setItems(activeItems);
+                    return res;
+                });
 
         return new PageResponse<>(page);
     }

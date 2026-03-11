@@ -86,6 +86,7 @@ public class SheetService {
 
         public PageResponse<SheetCardResponse> getPurchasedSheets(UUID userId, Pageable pageable) {
 
+                // 1. ดึงข้อมูล Order ที่ชำระเงินแล้วทั้งหมดมาจาก Order Service
                 PageResponse<OrderResponse> orderPage = orderClient.getPaidOrders(userId, pageable);
 
                 if (orderPage == null || orderPage.getContent() == null || orderPage.getContent().isEmpty()) {
@@ -98,13 +99,17 @@ public class SheetService {
                                         true);
                 }
 
-                Set<UUID> sheetIds = orderPage.getContent().stream()
+                // 2. 🌟 กรองเอาเฉพาะ Sheet ID ของ Item ที่ "ยังไม่ถูก Refund" เท่านั้น 🌟
+                Set<UUID> validSheetIds = orderPage.getContent().stream()
                                 .filter(order -> order.getItems() != null)
                                 .flatMap(order -> order.getItems().stream())
+                                // ✅ เพิ่มบรรทัดนี้: เช็คว่าต้องไม่เป็น True (เป็น null หรือ false ถือว่ายังไม่
+                                // Refund)
+                                .filter(item -> item.getIsRefunded() == null || !item.getIsRefunded())
                                 .map(OrderResponse.Item::getSheetId)
                                 .collect(Collectors.toSet());
 
-                if (sheetIds.isEmpty()) {
+                if (validSheetIds.isEmpty()) {
                         return new PageResponse<>(
                                         List.of(),
                                         orderPage.getPage(),
@@ -114,8 +119,10 @@ public class SheetService {
                                         orderPage.isLast());
                 }
 
-                List<Sheet> sheets = sheetRepo.findAllById(sheetIds);
+                // 3. ไปดึงข้อมูลรายละเอียดของ Sheet จากฐานข้อมูล Product Service
+                List<Sheet> sheets = sheetRepo.findAllById(validSheetIds);
 
+                // 4. แมปข้อมูลส่งกลับไปให้ Frontend
                 List<SheetCardResponse> content = sheets.stream()
                                 .map(this::toSheetCardResponse)
                                 .toList();
