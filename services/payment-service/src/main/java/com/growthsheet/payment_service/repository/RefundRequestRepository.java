@@ -10,6 +10,12 @@ import com.growthsheet.payment_service.entity.RefundStatus;
 @Repository
 public interface RefundRequestRepository extends JpaRepository<RefundRequest, UUID> {
     List<RefundRequest> findByUserId(UUID userId);
+
     List<RefundRequest> findByStatus(RefundStatus status);
+
     boolean existsByOrderItemIdAndStatus(UUID orderItemId, RefundStatus status);
+
+    // ✅ ใหม่ — เรียงตามวันที่ล่าสุด
+    List<RefundRequest> findAllByOrderByCreatedAtDesc();
+    List<RefundRequest> findByStatusOrderByCreatedAtDesc(RefundStatus status);
 }

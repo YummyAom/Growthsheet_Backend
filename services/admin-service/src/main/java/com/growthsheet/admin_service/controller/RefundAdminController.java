@@ -27,10 +27,12 @@ public class RefundAdminController {
 
     private final RefundAdminService refundAdminService;
 
-    @GetMapping("/pending")
-    public ResponseEntity<List<Map<String, Object>>> getPendingRefunds(
+    // ถ้าไม่ส่ง status จะดึงทั้งหมด
+    @GetMapping
+    public ResponseEntity<List<Map<String, Object>>> getRefunds(
+            @RequestParam(value = "status", required = false) String status,
             @RequestHeader("X-USER-ID") UUID adminId) {
-        return ResponseEntity.ok(refundAdminService.getPendingRefunds(adminId));
+        return ResponseEntity.ok(refundAdminService.getRefundsByStatus(status, adminId));
     }
 
     @PatchMapping("/{refundId}/approve")

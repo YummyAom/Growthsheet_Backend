@@ -11,23 +11,28 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "payment-service",
-        url = "${GATEWAY_SERVICE_URL}"
-)
+@FeignClient(name = "payment-service", url = "${GATEWAY_SERVICE_URL}")
 public interface PaymentClient {
-    @GetMapping("/payments/refunds/admin/pending")
-    ResponseEntity<List<Map<String, Object>>> getPendingRefunds(@RequestHeader("X-USER-ID") UUID adminId);
+        @GetMapping("/payments/refunds/admin/pending")
+        ResponseEntity<List<Map<String, Object>>> getPendingRefunds(@RequestHeader("X-USER-ID") UUID adminId);
 
-    @PatchMapping("/payments/refunds/admin/{refundId}/approve")
-    ResponseEntity<Map<String, Object>> approveRefund(
-            @RequestHeader("X-USER-ID") UUID adminId,
-            @PathVariable("refundId") UUID refundId,
-            @RequestBody Map<String, Object> req);
+        // ✅ ใหม่ — filter by status, ถ้าไม่ส่ง status จะได้ทั้งหมด
+        @GetMapping("/payments/refunds/admin")
+        ResponseEntity<List<Map<String, Object>>> getRefundsByStatus(
+                        @RequestHeader("X-USER-ID") UUID adminId,
+                        @RequestParam(value = "status", required = false) String status);
 
-    @PatchMapping("/payments/refunds/admin/{refundId}/reject")
-    ResponseEntity<Map<String, Object>> rejectRefund(
-            @RequestHeader("X-USER-ID") UUID adminId,
-            @PathVariable("refundId") UUID refundId,
-            @RequestBody Map<String, Object> req);
+        @PatchMapping("/payments/refunds/admin/{refundId}/approve")
+        ResponseEntity<Map<String, Object>> approveRefund(
+                        @RequestHeader("X-USER-ID") UUID adminId,
+                        @PathVariable("refundId") UUID refundId,
+                        @RequestBody Map<String, Object> req);
+
+        @PatchMapping("/payments/refunds/admin/{refundId}/reject")
+        ResponseEntity<Map<String, Object>> rejectRefund(
+                        @RequestHeader("X-USER-ID") UUID adminId,
+                        @PathVariable("refundId") UUID refundId,
+                        @RequestBody Map<String, Object> req);
 }

@@ -19,8 +19,8 @@ public class RefundAdminService {
     private final PaymentClient paymentClient;
     private final FileClient fileClient;
 
-    public List<Map<String, Object>> getPendingRefunds(UUID adminId) {
-        return paymentClient.getPendingRefunds(adminId).getBody();
+    public List<Map<String, Object>> getRefundsByStatus(String status, UUID adminId) {
+        return paymentClient.getRefundsByStatus(adminId, status).getBody();
     }
 
     public Map<String, Object> approveRefund(UUID refundId, MultipartFile slipFile, String adminComment, UUID adminId) {
@@ -31,8 +31,7 @@ public class RefundAdminService {
         // 2. Call payment-service to approve
         Map<String, Object> req = Map.of(
                 "refundSlipUrl", slipUrl,
-                "adminComment", adminComment == null ? "" : adminComment
-        );
+                "adminComment", adminComment == null ? "" : adminComment);
         return paymentClient.approveRefund(adminId, refundId, req).getBody();
     }
 
@@ -42,8 +41,7 @@ public class RefundAdminService {
         }
 
         Map<String, Object> req = Map.of(
-                "adminComment", adminComment
-        );
+                "adminComment", adminComment);
         return paymentClient.rejectRefund(adminId, refundId, req).getBody();
     }
 }

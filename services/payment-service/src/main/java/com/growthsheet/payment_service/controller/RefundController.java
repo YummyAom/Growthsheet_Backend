@@ -21,7 +21,8 @@ public class RefundController {
         this.refundService = refundService;
     }
 
-    // 🌟 เพิ่ม Endpoint สำหรับดูรายละเอียดและติดตามสถานะ Refund รายตัว (สำหรับ User)
+    // 🌟 เพิ่ม Endpoint สำหรับดูรายละเอียดและติดตามสถานะ Refund รายตัว (สำหรับ
+    // User)
     @GetMapping("/{refundId}")
     public ResponseEntity<RefundResponseDto> getRefundStatus(
             @RequestHeader("X-USER-ID") UUID userId,
@@ -47,6 +48,14 @@ public class RefundController {
             @RequestHeader("X-USER-ID") UUID adminId) {
         // In a real scenario, Gateway should restrict /admin paths to roles
         return ResponseEntity.ok(refundService.getPendingRefunds());
+    }
+
+    // ✅ ใหม่ — filter by status
+    @GetMapping("/admin")
+    public ResponseEntity<List<RefundResponseDto>> getRefundsByStatus(
+            @RequestHeader("X-USER-ID") UUID adminId,
+            @RequestParam(value = "status", required = false) String status) {
+        return ResponseEntity.ok(refundService.getRefundsByStatus(status));
     }
 
     @PatchMapping("/admin/{refundId}/approve")

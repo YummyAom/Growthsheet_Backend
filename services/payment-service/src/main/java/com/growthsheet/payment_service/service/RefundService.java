@@ -115,6 +115,29 @@ public class RefundService {
                 .collect(Collectors.toList());
     }
 
+    public List<RefundResponseDto> getRefundsByStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return refundRepo.findAllByOrderByCreatedAtDesc().stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        }
+
+        try {
+            // ✅ แปลง APPROVED → REFUNDED เพราะ enum ใช้ REFUNDED
+            String mappedStatus = status.toUpperCase();
+            if (mappedStatus.equals("APPROVED")) {
+                mappedStatus = "REFUNDED";
+            }
+
+            RefundStatus refundStatus = RefundStatus.valueOf(mappedStatus);
+            return refundRepo.findByStatusOrderByCreatedAtDesc(refundStatus).stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + status);
+        }
+    }
+
     @Transactional
     public RefundResponseDto approveRefund(UUID refundId, UUID adminId, ApproveRefundDto req) {
         RefundRequest refund = refundRepo.findById(refundId)
