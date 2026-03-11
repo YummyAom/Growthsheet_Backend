@@ -34,6 +34,11 @@ public class WithdrawAdminService {
     private final FileClient fileClient;
 
     public Page<WithdrawalRequestSummaryDTO> getWithdrawalRequests(String status, Pageable pageable) {
+        // ✅ ถ้า ALL หรือไม่ส่ง status → ดึงทั้งหมด
+        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
+            return withdrawalRequestRepository.findAllWithSeller(pageable)
+                    .map(this::mapToSummaryDTO);
+        }
         WithdrawStatus withdrawStatus = WithdrawStatus.valueOf(status.toUpperCase());
         return withdrawalRequestRepository.findByStatus(withdrawStatus, pageable)
                 .map(this::mapToSummaryDTO);
