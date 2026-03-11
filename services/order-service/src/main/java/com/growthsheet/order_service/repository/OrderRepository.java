@@ -19,8 +19,9 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Page<Order> findByUserIdAndStatus(UUID userId, String status, Pageable pageable);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(o) > 0 FROM Order o JOIN o.items i WHERE o.userId = :userId AND i.sheetId = :sheetId AND o.status = :status AND (i.isRefunded = false OR i.isRefunded IS NULL)")
     boolean existsByUserIdAndItemsSheetIdAndStatus(
-            UUID userId,
-            UUID sheetId,
-            String status);
+            @org.springframework.data.repository.query.Param("userId") UUID userId,
+            @org.springframework.data.repository.query.Param("sheetId") UUID sheetId,
+            @org.springframework.data.repository.query.Param("status") String status);
 }

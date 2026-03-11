@@ -37,10 +37,13 @@ public class OrderController {
         return "Hello order";
     }
 
+    // เปลี่ยนจาก ResponseEntity<Order> เป็น ResponseEntity<OrderResponse>
     @PostMapping("/checkout")
-    public ResponseEntity<Order> checkout(
+    public ResponseEntity<OrderResponse> checkout(
             @RequestHeader("X-USER-ID") UUID userId,
             @RequestBody CheckoutRequest checkoutRequest) {
+
+        // ค่าที่ได้จาก orderService.checkout จะเป็น OrderResponse แล้ว
         return ResponseEntity.ok(orderService.checkout(userId, checkoutRequest));
     }
 
@@ -104,5 +107,13 @@ public class OrderController {
         return ResponseEntity.ok(java.util.Map.of(
                 "status", "success",
                 "message", "ยกเลิก Order เรียบร้อยแล้ว"));
+    }
+
+    @PatchMapping("/internal/items/{orderItemId}/revoke")
+    public ResponseEntity<Void> revokeAccess(
+            @PathVariable UUID orderItemId) {
+
+        orderService.revokeAccess(orderItemId);
+        return ResponseEntity.ok().build();
     }
 }

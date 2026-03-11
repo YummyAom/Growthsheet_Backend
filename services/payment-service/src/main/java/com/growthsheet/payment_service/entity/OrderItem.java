@@ -33,4 +33,7 @@ public class OrderItem {
 
     @Column(name = "sheet_name")
     private String sheetName;
+
+    @Column(name = "is_refunded")
+    private Boolean isRefunded = false;
 }

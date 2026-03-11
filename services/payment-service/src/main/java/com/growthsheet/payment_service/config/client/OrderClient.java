@@ -28,6 +28,9 @@ public interface OrderClient {
         @PatchMapping("/order/{orderId}/paid")
         void markOrderAsPaid(@PathVariable("orderId") UUID orderId);
 
+        @PatchMapping("/order/internal/items/{orderItemId}/revoke")
+        void revokeOrderItemAccess(@PathVariable("orderItemId") UUID orderItemId);
+
     @GetMapping("{orderId}")
     public ResponseEntity<OrderResponse> getOrder(
             @RequestHeader("X-USER-ID") UUID userId,
