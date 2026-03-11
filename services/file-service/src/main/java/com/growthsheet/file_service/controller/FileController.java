@@ -45,4 +45,15 @@ public class FileController {
         Map<String, Object> response = fileService.uploadSlip(file);
         return ResponseEntity.ok(response);
     }
+
+    // เพิ่ม Endpoint ใหม่นี้ใน FileController.java
+    /**
+     * สำหรับอัปโหลดรูปภาพหลักฐานการขอคืนเงิน (Refund Evidence)
+     * POST /api/file/upload-refund-evidence
+     */
+    @PostMapping("/upload-refund-evidence")
+    public ResponseEntity<Map<String, Object>> uploadRefundEvidence(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> response = fileService.uploadRefundEvidence(file);
+        return ResponseEntity.ok(response);
+    }
 }

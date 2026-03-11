@@ -163,4 +163,41 @@ public class FileService {
 
         return uploadResult;
     }
+
+    // เพิ่มฟังก์ชันใหม่นี้ใน FileService.java
+    public Map<String, Object> uploadRefundEvidence(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evidence file is empty or missing");
+        }
+
+        String contentType = file.getContentType();
+        if (!isImage(contentType)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                    "Only image files are supported for refund evidence");
+        }
+
+        try {
+            Map<String, Object> uploadParams = new HashMap<>();
+            // กำหนดโฟลเดอร์ปลายทางสำหรับ Refund โดยเฉพาะ
+            uploadParams.put("folder", "growthsheet_assets/slips/refunds");
+            uploadParams.put("resource_type", "auto");
+            uploadParams.put("quality", "auto");
+            uploadParams.put("fetch_format", "auto");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> uploadResult = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(),
+                    uploadParams);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("url", uploadResult.get("secure_url"));
+            result.put("fileType", "EVIDENCE");
+            result.put("fileName", file.getOriginalFilename());
+
+            return result;
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Refund evidence upload failed: " + e.getMessage());
+        }
+    }
 }

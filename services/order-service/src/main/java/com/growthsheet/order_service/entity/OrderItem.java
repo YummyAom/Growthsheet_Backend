@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,4 +34,7 @@ public class OrderItem {
     @JoinColumn(name = "order_id")
     @JsonIgnore
     private Order order;
+
+    @Column(name = "is_refunded")
+    private Boolean isRefunded = false;
 }

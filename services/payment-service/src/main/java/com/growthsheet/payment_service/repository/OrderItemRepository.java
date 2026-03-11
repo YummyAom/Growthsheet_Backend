@@ -25,6 +25,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
             """, nativeQuery = true)
     BigDecimal calculateNetRevenueBySellerId(@Param("sellerId") UUID sellerId);
 
@@ -36,6 +37,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
             """, nativeQuery = true)
     Long calculateTotalSalesVolumeBySellerId(@Param("sellerId") UUID sellerId);
 
@@ -51,6 +53,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
                 GROUP BY oi.sheet_id, oi.sheet_name
                 ORDER BY salesVolume DESC
             """, nativeQuery = true)
@@ -67,6 +70,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
                 AND DATE(o.created_at) = CURRENT_DATE
             """, nativeQuery = true)
     BigDecimal calculateTodaySalesBySellerId(@Param("sellerId") UUID sellerId);
@@ -84,6 +88,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
                 AND o.created_at >= :since
                 GROUP BY DATE(o.created_at)
                 ORDER BY saleDate ASC
@@ -106,6 +111,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                 JOIN payments p ON p.order_id = o.id
                 WHERE s.seller_id = :sellerId
                 AND p.status = 'PAID'
+                AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
                 AND o.created_at >= :since
                 GROUP BY EXTRACT(YEAR FROM o.created_at), EXTRACT(MONTH FROM o.created_at)
                 ORDER BY year ASC, month ASC
@@ -114,6 +120,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
             @Param("sellerId") UUID sellerId,
             @Param("since") LocalDateTime since);
 
-    @Query("SELECT o.sheetId, COUNT(o.id) FROM OrderItem o WHERE o.sheetId IN :sheetIds GROUP BY o.sheetId")
+    @Query("SELECT o.sheetId, COUNT(o.id) FROM OrderItem o WHERE o.sheetId IN :sheetIds AND (o.isRefunded = false OR o.isRefunded IS NULL) GROUP BY o.sheetId")
     List<Object[]> countSalesBySheetIds(@Param("sheetIds") List<UUID> sheetIds);
 }

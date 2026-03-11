@@ -21,9 +21,11 @@ public class OrderResponse {
     @Getter
     @Setter
     public static class Item {
+        private UUID orderItemId;
         private UUID sheetId;
         private String sheetName;
         private String sellerName;
         private BigDecimal price;
+        private Boolean isRefunded;
     }
 }

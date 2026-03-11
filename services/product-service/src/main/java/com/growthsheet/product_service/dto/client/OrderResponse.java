@@ -64,6 +64,7 @@ public class OrderResponse {
         private String sheetName;
         private String sellerName;
         private BigDecimal price;
+        private Boolean isRefunded;
 
         public Item() {
         }
@@ -98,6 +99,14 @@ public class OrderResponse {
 
         public void setPrice(BigDecimal price) {
             this.price = price;
+        }
+
+        public Boolean getIsRefunded() {
+            return isRefunded;
+        }
+
+        public void setIsRefunded(Boolean isRefunded) {
+            this.isRefunded = isRefunded;
         }
     }
 }
