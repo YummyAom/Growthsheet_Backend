@@ -16,6 +16,8 @@ spring:
     password: ${POSTGRES_PASSWORD}
 google:
   client-id: ${GOOGLE_ID}
+  android-id: ${ANDROID_GOOGLE_ID}
+  ios-id: ${IOS_GOOGLE_ID}
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXP_MS}

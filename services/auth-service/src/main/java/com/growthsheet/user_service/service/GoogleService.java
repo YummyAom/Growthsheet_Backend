@@ -2,6 +2,7 @@ package com.growthsheet.user_service.service;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,6 +40,10 @@ public class GoogleService {
 
     @Value("${google.client-id}")
     private String googleClientId;
+    @Value("${google.android-id}")
+    private String androidClientId;
+    @Value("${google.ios-id}")
+    private String iosClientId;
 
     public Mono<Map<String, Object>> googleLogin(String idToken) {
 
@@ -47,7 +52,10 @@ public class GoogleService {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance())
-                    .setAudience(Collections.singletonList(googleClientId))
+                    .setAudience(List.of(
+                            googleClientId,
+                            androidClientId,
+                            iosClientId))
                     .build();
 
             GoogleIdToken googleIdToken = verifier.verify(idToken);
@@ -80,7 +88,7 @@ public class GoogleService {
 
                 user = userRepository.save(user);
             }
-            
+
             return user;
 
         })

@@ -11,6 +11,10 @@ spring:
   application:
     name: notification-service
   datasource:
+    hikari:
+        maximum-pool-size: ${DB_POOL_SIZE:2}
+        minimum-idle: 1
+        # idle-timeout: 30000
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
