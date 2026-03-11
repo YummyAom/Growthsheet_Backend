@@ -3,7 +3,7 @@ package com.growthsheet.admin_service.controller;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,6 +18,7 @@ import com.growthsheet.admin_service.config.client.AnalysisClient;
 import com.growthsheet.admin_service.config.client.ProductClient;
 import com.growthsheet.admin_service.dto.DownloadResponse;
 import com.growthsheet.admin_service.dto.RejectRequest;
+import com.growthsheet.admin_service.dto.SheetCardWithStatusResponse;
 import com.growthsheet.admin_service.dto.sheets.AdminSheetDetailResponse;
 import com.growthsheet.admin_service.dto.sheets.PageResponse;
 import com.growthsheet.admin_service.dto.sheets.SheetCardResponse;
@@ -142,5 +143,80 @@ public class SheetAdminController {
                 sheet.getFileUrl(),
                 lastAction,
                 lastComment);
+    }
+
+    @GetMapping("/list")
+    public PageResponse<SheetCardWithStatusResponse> getSheetsByStatus(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(required = false) String status) {
+
+        boolean isAll = status == null || status.isBlank() || "ALL".equalsIgnoreCase(status);
+
+        if (isAll) {
+            // ✅ ดึงทั้งหมด 2 รอบ size ใหญ่ แล้วรวมกัน
+            PageResponse<SheetCardResponse> published = productClient.getSheets(0, 200, sort, true);
+            PageResponse<SheetCardResponse> unpublished = productClient.getSheets(0, 200, sort, false);
+
+            var allEnriched = Stream.concat(
+                    published.content().stream(),
+                    unpublished.content().stream()).map(this::enrich).toList();
+
+            // ✅ paginate เอง
+            int total = allEnriched.size();
+            int fromIndex = Math.min(page * size, total);
+            int toIndex = Math.min(fromIndex + size, total);
+            var paged = allEnriched.subList(fromIndex, toIndex);
+
+            return new PageResponse<>(
+                    paged,
+                    page,
+                    size,
+                    total,
+                    (int) Math.ceil((double) total / size));
+        }
+
+        Boolean isPublished = "APPROVED".equalsIgnoreCase(status) ? true : false;
+        PageResponse<SheetCardResponse> result = productClient.getSheets(page, size, sort, isPublished);
+
+        var enriched = result.content().stream()
+                .map(this::enrich)
+                .filter(s -> s.status().equalsIgnoreCase(status))
+                .toList();
+
+        return new PageResponse<>(
+                enriched,
+                result.number(),
+                result.size(),
+                (long) enriched.size(),
+                result.totalPages());
+    }
+
+    private SheetCardWithStatusResponse enrich(SheetCardResponse sheet) {
+        SheetReviewLog log = logRepository
+                .findTopBySheetIdOrderByCreatedAtDesc(sheet.id())
+                .orElse(null);
+
+        String computedStatus;
+        if (log != null && "REJECTED".equals(log.getAction())) {
+            computedStatus = "REJECTED";
+        } else if (Boolean.TRUE.equals(sheet.isPublished())) {
+            computedStatus = "APPROVED";
+        } else {
+            computedStatus = "PENDING";
+        }
+
+        return new SheetCardWithStatusResponse(
+                sheet.id(),
+                sheet.title(),
+                sheet.price(),
+                sheet.seller(),
+                sheet.thumbnailUrl(),
+                sheet.isPublished(),
+                computedStatus);
+    }
+
+    record SheetCardWithStatus(SheetCardResponse sheet, String status) {
     }
 }
