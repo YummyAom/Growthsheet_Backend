@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.growthsheet.user_service.dto.requests.GoogleLoginRequest;
 import com.growthsheet.user_service.dto.requests.ChangePasswordRequest;
@@ -28,19 +29,23 @@ import com.growthsheet.user_service.service.AuthService;
 import com.growthsheet.user_service.service.GoogleService;
 import com.growthsheet.user_service.service.OtpService;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import reactor.core.publisher.Mono;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
     private AuthService authService;
     private GoogleService googleService;
+    @Value("${GOOGLE_ID}")
+    String GOOGLE_CLIENT_ID;
+
     public AuthController(
             AuthService authService,
             OtpService otpService,
-            GoogleService googleService
-        ) {
+            GoogleService googleService) {
         this.authService = authService;
         this.googleService = googleService;
     }
@@ -50,11 +55,26 @@ public class AuthController {
         return "Hello auth";
     }
 
-    @PostMapping("/google-login")
-    public Mono<Map<String, Object>> googleLogin(
-        @RequestBody GoogleLoginRequest req
-    ){
-        return googleService.googleLogin(req.idToken());
+    @GetMapping("/google")
+    public void googleLogin(HttpServletResponse res) throws IOException {
+
+        String url = "https://accounts.google.com/o/oauth2/v2/auth"
+                + "?client_id=" + GOOGLE_CLIENT_ID
+                + "&redirect_uri=http://localhost:8080/api/auth/google/callback"
+                + "&response_type=code"
+                + "&scope=openid email profile";
+
+        res.sendRedirect(url);
+    }
+
+    @GetMapping("/google/callback")
+    public void googleCallback(
+            @RequestParam String code,
+            HttpServletResponse response) throws IOException {
+
+        String jwt = googleService.handleGoogleLogin(code);
+
+        response.sendRedirect("mymobileapp://auth?token=" + jwt);
     }
 
     // Spring จะไปหา JWT_SECRET มาใส่ให้เองอัตโนมัติ
@@ -167,4 +187,3 @@ public class AuthController {
     }
 
 }
-
