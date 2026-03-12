@@ -137,6 +137,13 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
 
+        // ✅ Notify Order Service
+        try {
+            orderClient.markOrderAsPaid(orderId);
+        } catch (Exception e) {
+            log.error("Failed to notify OrderService for order: " + orderId, e);
+        }
+
         try {
             NotificationRequest req = new NotificationRequest();
             req.setUserId(payment.getUserId());
