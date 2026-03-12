@@ -28,8 +28,8 @@ public class OrderItem {
     @Column(name = "seller_name")
     private String sellerName;
 
-    @Column(name = "seller_id")
-    private UUID sellerId;   
+    // @Column(name = "seller_id")
+    // private UUID sellerId;   
     @Column(name = "sheet_id")
     private UUID sheetId;
 

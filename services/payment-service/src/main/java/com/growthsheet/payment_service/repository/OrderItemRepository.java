@@ -10,13 +10,24 @@ import org.springframework.data.repository.query.Param;
 
 import com.growthsheet.payment_service.entity.OrderItem;
 import com.growthsheet.payment_service.dto.dashboard.SheetPerformanceProjection;
+import com.growthsheet.payment_service.dto.SellerSummary;
 import com.growthsheet.payment_service.dto.dashboard.DailySalesProjection;
 import com.growthsheet.payment_service.dto.dashboard.MonthlySalesProjection;
 
 import java.util.List;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
-    List<OrderItem> findByOrderId(UUID orderId);
+    @Query(value = """
+                SELECT oi.seller_name, SUM(oi.price) as total,
+                       STRING_AGG(oi.sheet_name, ', ') as sheet_names,
+                       u.id as seller_id
+                FROM order_items oi
+                JOIN users u ON u.username = oi.seller_name
+                WHERE oi.order_id = :orderId
+                  AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
+                GROUP BY oi.seller_name, u.id
+            """, nativeQuery = true)
+    List<SellerSummary> findSellerSummaryByOrderId(@Param("orderId") UUID orderId);
 
     @Query(value = """
                 SELECT COALESCE(SUM(oi.price) * 0.85, 0)

@@ -13,6 +13,7 @@ import com.growthsheet.payment_service.config.client.NotificationClient;
 import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.NotificationRequest;
 import com.growthsheet.payment_service.dto.PaymentStatus;
+import com.growthsheet.payment_service.dto.SellerSummary;
 import com.growthsheet.payment_service.entity.OrderItem;
 import com.growthsheet.payment_service.entity.Payment;
 import com.growthsheet.payment_service.repository.OrderItemRepository;
@@ -149,16 +150,16 @@ public class PaymentService {
         // ===== แจ้งผู้ขาย =====
         try {
 
-            List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+            List<SellerSummary> items = orderItemRepository.findSellerSummaryByOrderId(orderId);
 
-            for (OrderItem item : items) {
+            for (SellerSummary item : items) {
 
                 NotificationRequest req = new NotificationRequest();
-                req.setUserId(item.getSellerId());
+                req.setUserId(item.getSeller_id());
                 req.setTitle("มีคนซื้อชีทของคุณ 🎉");
                 req.setMessage(
-                        "ชีท \"" + item.getSheetName() +
-                                "\" ถูกซื้อแล้ว ราคา " + item.getPrice() + " บาท");
+                        "ชีท \"" + item.getSeller_name() +
+                                "\" ถูกซื้อแล้ว ราคา " + item.getTotal() + " บาท");
 
                 notificationClient.createNotification(req);
             }
