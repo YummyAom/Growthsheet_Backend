@@ -38,7 +38,6 @@ import com.growthsheet.product_service.repository.HashtagRepository;
 import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 import com.growthsheet.product_service.repository.UserRepository;
-
 import com.growthsheet.product_service.config.client.OrderClient;
 import com.growthsheet.product_service.dto.client.OrderResponse;
 
@@ -83,7 +82,6 @@ public class SheetService {
                 this.orderClient = orderClient;
                 this.hashtagRepository = hashtagRepository;
         }
-
         public PageResponse<SheetCardResponse> getPurchasedSheets(UUID userId, Pageable pageable) {
 
                 // 1. ดึงข้อมูล Order ที่ชำระเงินแล้วทั้งหมดมาจาก Order Service
@@ -486,10 +484,6 @@ public class SheetService {
                 sheet.setStatus(SheetStatus.REJECTED);
                 sheet.setIsPublished(false);
                 sheet.setAdminNote(adminNote);
-        }
-
-        @Transactional
-        public void createReview(UUID sheetId, UUID userId) {
         }
 
         /**
