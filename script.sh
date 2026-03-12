@@ -11,8 +11,7 @@ sleep 10
 SERVICES_DIR="./services"
 for service in admin-service auth-service file-service notificaiton order-service payment-service product-service user-service; do
     echo "Starting $service..."
-    cd "$SERVICES_DIR/$service" && ./mvnw spring-boot:run &
-    cd ../..
+    ( cd "$SERVICES_DIR/$service" && ./mvnw spring-boot:run ) &
 done
 
 wait
