@@ -174,6 +174,7 @@ public class SheetController {
                 sheetLikeService.getLikedSheets(userId, page, size));
     }
 
+
     @Value("${internal.service.token}")
     private String internalServiceToken;
 
