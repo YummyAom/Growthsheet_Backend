@@ -184,7 +184,6 @@ public class SheetController {
                 sheetLikeService.getLikedSheets(userId, page, size));
     }
 
-
     @Value("${internal.service.token}")
     private String internalServiceToken;
 
@@ -225,11 +224,14 @@ public class SheetController {
     public ResponseEntity<Page<SheetCardResponse>> getSheetPublicationHistory(
             @RequestHeader("X-USER-ID") UUID sellerId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean isDeleted,
+            @RequestParam(required = false) Boolean suspended,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(
-                sheetService.getSheetPublicationHistory(sellerId, status, page, size));
+                sheetService.getSheetPublicationHistory(
+                        sellerId, status, isDeleted, suspended, page, size));
     }
 
     /**

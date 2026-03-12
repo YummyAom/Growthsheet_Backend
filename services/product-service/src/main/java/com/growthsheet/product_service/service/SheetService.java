@@ -499,9 +499,10 @@ public class SheetService {
         /**
          * ดูประวัติการขอ publish sheet ของ seller
          */
-        public Page<SheetCardResponse> getSheetPublicationHistory(
-                        UUID sellerId,
+        public Page<SheetCardResponse> getSheetPublicationHistory(UUID sellerId,
                         String status,
+                        Boolean isDeleted,
+                        Boolean suspended,
                         int page,
                         int size) {
 
@@ -512,45 +513,51 @@ public class SheetService {
 
                 Page<Sheet> sheets;
 
-                if (status != null && !status.isBlank()) {
+                // --- ลำดับการกรองที่ถูกต้อง ---
+                if (Boolean.TRUE.equals(isDeleted)) {
+                        // 1. ถ้าส่งมาว่าอยากดูที่ถูกลบ ให้ดึงที่ถูกลบเท่านั้น (Priority สูงสุด)
+                        sheets = sheetRepo.findAllBySellerIdAndIsDeletedTrue(sellerId, pageable);
+
+                } else if (Boolean.TRUE.equals(suspended)) {
+                        // 2. ถ้าอยากดูที่ถูกระงับ ต้องเป็น APPROVED + NOT PUBLISHED และต้อง
+                        // "ยังไม่ถูกลบ"
+                        // (Repository ของเราถูกแก้ให้เช็ค isDeleted = false แล้ว)
+                        sheets = sheetRepo.findAllBySellerIdAndStatusAndIsPublishedFalse(
+                                        sellerId,
+                                        SheetStatus.APPROVED,
+                                        pageable);
+
+                } else if (status != null && !status.isBlank()) {
+                        // 3. ถ้ากรองตาม Status (PENDING/REJECTED) ต้องดึงเฉพาะที่ยังไม่ถูกลบ
                         SheetStatus sheetStatus = SheetStatus.valueOf(status.toUpperCase());
-                        sheets = sheetRepo.findAllBySellerIdAndStatus(sellerId, sheetStatus, pageable);
+                        sheets = sheetRepo.findAllBySellerIdAndStatusAndIsDeletedFalse(
+                                        sellerId,
+                                        sheetStatus,
+                                        pageable);
                 } else {
-                        sheets = sheetRepo.findAllBySellerId(sellerId, pageable);
+                        // 4. กรณี "ทั้งหมด" ดึงเฉพาะที่ยังไม่ถูกลบ
+                        sheets = sheetRepo.findAllBySellerIdAndIsDeletedFalse(sellerId, pageable);
                 }
 
-                // === ส่วนที่เพิ่มเข้ามาใหม่เพื่อดึงยอดขาย ===
-
-                // 1. ดึง ID ของชีททั้งหมดในหน้านี้
+                // --- ส่วนดึงยอดขายจาก Order Service ---
                 List<UUID> sheetIds = sheets.getContent().stream()
                                 .map(Sheet::getId)
                                 .toList();
 
-                // 2. ไปถาม Payment Service ผ่าน FeignClient (OrderClient)
                 java.util.Map<UUID, Long> salesCountMap = new java.util.HashMap<>();
                 if (!sheetIds.isEmpty()) {
                         try {
-                                // *** ตรงนี้คุณต้องไปเพิ่มเมธอด getSalesCountsBySheetIds ใน OrderClient
-                                // ก่อนนะครับ ***
                                 salesCountMap = orderClient.getSalesCountsBySheetIds(sheetIds);
                         } catch (Exception e) {
-                                // ถ้า Payment Service ล่ม หรือยิงไม่ผ่าน ก็ปล่อยผ่านไปก่อน (หน้าเว็บจะได้ไม่พัง
-                                // แค่ยอดโชว์เป็น 0)
-                                System.err.println("ไม่สามารถดึงยอดขายจาก Payment Service ได้: " + e.getMessage());
+                                System.err.println("ไม่สามารถดึงยอดขายได้: " + e.getMessage());
                         }
                 }
 
-                // 3. ประกอบร่าง DTO และยัดยอดขายเข้าไป
-                final java.util.Map<UUID, Long> finalSalesCountMap = salesCountMap; // ทำเป็น final เพื่อใช้ใน lambda
+                final java.util.Map<UUID, Long> finalSalesCountMap = salesCountMap;
 
                 return sheets.map(sheet -> {
-                        // ใช้ assembler เดิมสร้าง response ที่มี salesCount = 0
                         SheetCardResponse baseResponse = sheetAssembler.assemble(sheet);
-
-                        // ดึงตัวเลขจาก Map มาใส่
                         Long count = finalSalesCountMap.getOrDefault(sheet.getId(), 0L);
-
-                        // ใช้ withSalesCount เพื่อสร้าง record ใหม่ที่อัปเดตยอดขายแล้ว
                         return baseResponse.withSalesCount(count.intValue());
                 });
         }
