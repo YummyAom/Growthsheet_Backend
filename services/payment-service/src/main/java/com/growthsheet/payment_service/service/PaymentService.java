@@ -151,7 +151,7 @@ public class PaymentService {
         try {
 
             List<SellerSummary> items = orderItemRepository.findSellerSummaryByOrderId(orderId);
-
+            
             for (SellerSummary item : items) {
 
                 NotificationRequest req = new NotificationRequest();

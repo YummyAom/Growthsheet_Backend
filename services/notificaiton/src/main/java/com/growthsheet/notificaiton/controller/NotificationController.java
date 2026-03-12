@@ -20,7 +20,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     // ===== create notification (internal call เช่น จาก payment-service) =====
-    @PostMapping
+    @PostMapping("/internal")
     public Notification createNotification(
             @RequestBody NotificationRequest noti
         ) {

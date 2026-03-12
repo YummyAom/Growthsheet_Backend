@@ -93,6 +93,15 @@ spring:
             - AuthenticationFilter
             - PrefixPath=/api
         # =========================
+        # Notification internal (จาก service อื่น ไม่ต้อง auth)
+        # =========================
+        - id: notification-service-internal
+          uri: ${NOTIFICATION_SERVICE_URL}
+          predicates:
+            - Path=/notifications/internal/**
+          filters:
+            - PrefixPath=/api
+        # =========================
         # Notification REST
         # =========================
         - id: notification-service

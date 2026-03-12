@@ -11,7 +11,7 @@ import com.growthsheet.payment_service.dto.NotificationRequest;
 )
 public interface NotificationClient {
 
-    @PostMapping("/notifications")
+    @PostMapping("/notifications/internal")
     void createNotification(
         @RequestBody NotificationRequest request
     );
