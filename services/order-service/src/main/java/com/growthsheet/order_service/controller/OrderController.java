@@ -1,6 +1,7 @@
 package com.growthsheet.order_service.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -115,5 +116,17 @@ public class OrderController {
 
         orderService.revokeAccess(orderItemId);
         return ResponseEntity.ok().build();
+    }// OrderController.java
+
+    @PostMapping("/internal/sales-counts")
+    public ResponseEntity<Map<UUID, Long>> getSalesCountsBySheetIds(
+            @RequestBody List<UUID> sheetIds) {
+        return ResponseEntity.ok(orderService.getSalesCountsBySheetIds(sheetIds));
+    }
+
+    @PostMapping("/internal/buyer-ids")
+    public ResponseEntity<List<UUID>> getBuyerIdsBySheetIds(
+            @RequestBody List<UUID> sheetIds) {
+        return ResponseEntity.ok(orderService.getBuyerIdsBySheetIds(sheetIds));
     }
 }

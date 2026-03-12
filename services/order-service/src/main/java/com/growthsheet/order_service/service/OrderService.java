@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -235,5 +238,26 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("OrderItem not found"));
         item.setIsRefunded(true);
         orderItemRepo.save(item);
+    }
+
+    public Map<UUID, Long> getSalesCountsBySheetIds(List<UUID> sheetIds) {
+        // ดึง order ที่ PAID ทั้งหมด แล้วนับ item ที่ตรงกับ sheetIds และไม่ถูก refund
+        return orderRepo.findAllByStatus("PAID").stream()
+                .flatMap(order -> order.getItems().stream())
+                .filter(item -> sheetIds.contains(item.getSheetId()))
+                .filter(item -> item.getIsRefunded() == null || !item.getIsRefunded())
+                .collect(Collectors.groupingBy(
+                        OrderItem::getSheetId,
+                        Collectors.counting()));
+    }
+
+    public List<UUID> getBuyerIdsBySheetIds(List<UUID> sheetIds) {
+        return orderRepo.findAllByStatus("PAID").stream()
+                .flatMap(order -> order.getItems().stream()
+                        .filter(item -> sheetIds.contains(item.getSheetId()))
+                        .filter(item -> item.getIsRefunded() == null || !item.getIsRefunded())
+                        .map(item -> order.getUserId()))
+                .distinct()
+                .toList();
     }
 }

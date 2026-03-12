@@ -13,91 +13,90 @@ import com.growthsheet.product_service.repository.UserRepository;
 @Service
 public class SellerAnalyticsService {
 
-    private final SheetRepository sheetRepo;
-    private final OrderClient orderClient;
-    private final UserRepository userRepo;
+        private final SheetRepository sheetRepo;
+        private final OrderClient orderClient;
+        private final UserRepository userRepo;
 
-    public SellerAnalyticsService(
-            SheetRepository sheetRepo,
-            OrderClient orderClient,
-            UserRepository userRepo) {
+        public SellerAnalyticsService(
+                        SheetRepository sheetRepo,
+                        OrderClient orderClient,
+                        UserRepository userRepo) {
 
-        this.sheetRepo = sheetRepo;
-        this.orderClient = orderClient;
-        this.userRepo = userRepo;
-    }
-
-    public SellerAnalyticsResponse getSellerAnalytics(UUID sellerId) {
-
-        // 1️⃣ ดึง sheet ของ seller
-        List<Sheet> sheets = sheetRepo.findAllBySellerId(sellerId);
-
-        List<UUID> sheetIds = sheets.stream()
-                .map(Sheet::getId)
-                .toList();
-
-        // 2️⃣ ดึงยอดขายจาก order service
-        Map<UUID, Long> salesMapTemp = new HashMap<>();
-
-        if (!sheetIds.isEmpty()) {
-            try {
-                salesMapTemp = orderClient.getSalesCountsBySheetIds(sheetIds);
-            } catch (Exception e) {
-                System.err.println("Cannot fetch sales counts: " + e.getMessage());
-            }
+                this.sheetRepo = sheetRepo;
+                this.orderClient = orderClient;
+                this.userRepo = userRepo;
         }
 
-        final Map<UUID, Long> salesMap = salesMapTemp;
+        public SellerAnalyticsResponse getSellerAnalytics(UUID sellerId) {
 
-        // 3️⃣ คำนวณยอดขายรวม
-        long totalSales = salesMap.values().stream()
-                .mapToLong(Long::longValue)
-                .sum();
+                // 1️⃣ ดึง sheet ของ seller
+                List<Sheet> sheets = sheetRepo.findAllBySellerId(sellerId);
 
-        // 4️⃣ Top 3 Sheets
-        List<SheetPerformanceDTO> topSheets =
-                sheets.stream()
-                        .map(sheet -> new SheetPerformanceDTO(
-                                sheet.getId(),
-                                sheet.getTitle(),
-                                salesMap.getOrDefault(sheet.getId(), 0L)
-                        ))
-                        .sorted((a, b) -> Long.compare(b.salesVolume(), a.salesVolume()))
-                        .limit(3)
-                        .toList();
+                List<UUID> sheetIds = sheets.stream()
+                                .map(Sheet::getId)
+                                .toList();
 
-        // 5️⃣ Faculty distribution
-        List<FacultyDistributionDTO> facultyDistribution =
-                userRepo.findAll().stream()
-                        .map(user -> {
-                            String faculty = user.getFaculty();
+                // 2️⃣ ดึงยอดขายจาก order service
+                Map<UUID, Long> salesMapTemp = new HashMap<>();
 
-                            if (faculty == null || faculty.isBlank()) {
-                                faculty = "อื่นๆ";
-                            }
+                if (!sheetIds.isEmpty()) {
+                        try {
+                                salesMapTemp = orderClient.getSalesCountsBySheetIds(sheetIds);
+                        } catch (Exception e) {
+                                System.err.println("Cannot fetch sales counts: " + e.getMessage());
+                        }
+                }
 
-                            return faculty;
-                        })
-                        .collect(
-                                java.util.stream.Collectors.groupingBy(
-                                        f -> f,
-                                        java.util.stream.Collectors.counting()
-                                )
-                        )
-                        .entrySet()
-                        .stream()
-                        .map(entry ->
-                                new FacultyDistributionDTO(
-                                        entry.getKey(),
-                                        entry.getValue()
-                                )
-                        )
-                        .toList();
+                final Map<UUID, Long> salesMap = salesMapTemp;
 
-        return new SellerAnalyticsResponse(
-                totalSales,
-                topSheets,
-                facultyDistribution
-        );
-    }
+                // 3️⃣ คำนวณยอดขายรวม
+                long totalSales = salesMap.values().stream()
+                                .mapToLong(Long::longValue)
+                                .sum();
+
+                // 4️⃣ Top 3 Sheets
+                List<SheetPerformanceDTO> topSheets = sheets.stream()
+                                .map(sheet -> new SheetPerformanceDTO(
+                                                sheet.getId(),
+                                                sheet.getTitle(),
+                                                salesMap.getOrDefault(sheet.getId(), 0L)))
+                                .sorted((a, b) -> Long.compare(b.salesVolume(), a.salesVolume()))
+                                .limit(3)
+                                .toList();
+
+                // 5️⃣ Faculty distribution
+                List<UUID> buyerIds = Collections.emptyList();
+                if (!sheetIds.isEmpty()) {
+                        try {
+                                buyerIds = orderClient.getBuyerIdsBySheetIds(sheetIds);
+                        } catch (Exception e) {
+                                System.err.println("Cannot fetch buyer ids: " + e.getMessage());
+                        }
+                }
+
+                List<FacultyDistributionDTO> facultyDistribution = userRepo.findAllById(buyerIds).stream()
+                                .map(user -> {
+                                        String faculty = user.getFaculty();
+                                        if (faculty == null || faculty.isBlank()) {
+                                                faculty = "อื่นๆ";
+                                        }
+                                        return faculty;
+                                })
+                                .collect(
+                                                java.util.stream.Collectors.groupingBy(
+                                                                f -> f,
+                                                                java.util.stream.Collectors.counting()))
+                                .entrySet()
+                                .stream()
+                                .map(entry -> new FacultyDistributionDTO(
+                                                entry.getKey(),
+                                                entry.getValue()))
+                                .toList();
+
+                // ✅ เพิ่มตรงนี้
+                return new SellerAnalyticsResponse(
+                                totalSales,
+                                topSheets,
+                                facultyDistribution);
+        }
 }

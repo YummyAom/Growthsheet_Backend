@@ -14,7 +14,7 @@ import com.growthsheet.order_service.entity.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByUserId(UUID userId);
-
+    List<Order> findAllByStatus(String status);
     List<Order> findByUserIdAndStatus(UUID userId, String status);
 
     Page<Order> findByUserIdAndStatus(UUID userId, String status, Pageable pageable);

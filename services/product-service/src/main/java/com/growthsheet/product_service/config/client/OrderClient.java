@@ -31,7 +31,9 @@ public interface OrderClient {
                         @RequestHeader("X-USER-ID") UUID userId,
                         @SpringQueryMap Pageable pageable);
 
-        @PostMapping("/api/payments/internal/sales-counts")
+        @PostMapping("/api/order/internal/sales-counts")
         Map<UUID, Long> getSalesCountsBySheetIds(@RequestBody List<UUID> sheetIds);
 
+        @PostMapping("/api/order/internal/buyer-ids")
+        List<UUID> getBuyerIdsBySheetIds(@RequestBody List<UUID> sheetIds);
 }
