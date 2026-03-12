@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -66,6 +67,15 @@ public class SheetController {
     @GetMapping("/tags")
     public ResponseEntity<List<String>> getAllTags() {
         return ResponseEntity.ok(sheetService.getAllTags());
+    }
+
+    @DeleteMapping("/{sheetId}")
+    public ResponseEntity<Void> deleteSheet(
+            @PathVariable UUID sheetId,
+            @RequestHeader("X-USER-ID") UUID sellerId) {
+
+        sheetService.softDeleteSheet(sheetId, sellerId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -289,8 +299,8 @@ public class SheetController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        com.growthsheet.product_service.entity.ReportStatus newStatus =
-                com.growthsheet.product_service.entity.ReportStatus.valueOf(status.toUpperCase());
+        com.growthsheet.product_service.entity.ReportStatus newStatus = com.growthsheet.product_service.entity.ReportStatus
+                .valueOf(status.toUpperCase());
 
         return ResponseEntity.ok(
                 sheetReportService.reviewReport(reportId, adminId, newStatus, adminNote, suspendSheet));

@@ -38,7 +38,6 @@ import com.growthsheet.product_service.repository.HashtagRepository;
 import com.growthsheet.product_service.repository.ReviewRepository;
 import com.growthsheet.product_service.repository.SheetRepository;
 import com.growthsheet.product_service.repository.UserRepository;
-
 import com.growthsheet.product_service.config.client.OrderClient;
 import com.growthsheet.product_service.dto.client.OrderResponse;
 
@@ -194,9 +193,15 @@ public class SheetService {
 
         private SheetCardResponse toSheetCardResponse(Sheet sheet) {
 
+                System.out.println(">>> mapping sheetId=" + sheet.getId()
+                                + " status=" + sheet.getStatus()
+                                + " isPublished=" + sheet.getIsPublished());
+
                 SellerDTO seller = userRepo.findById(sheet.getSellerId())
                                 .map(u -> new SellerDTO(u.getId(), u.getName()))
                                 .orElse(null);
+
+                System.out.println(">>> seller=" + seller);
 
                 return sheetCardMapper.toResponse(sheet, seller);
         }
@@ -476,6 +481,7 @@ public class SheetService {
 
                 sheet.setStatus(SheetStatus.APPROVED);
                 sheet.setIsPublished(true);
+                sheetRepo.save(sheet);
         }
 
         @Transactional
@@ -486,10 +492,6 @@ public class SheetService {
                 sheet.setStatus(SheetStatus.REJECTED);
                 sheet.setIsPublished(false);
                 sheet.setAdminNote(adminNote);
-        }
-
-        @Transactional
-        public void createReview(UUID sheetId, UUID userId) {
         }
 
         /**

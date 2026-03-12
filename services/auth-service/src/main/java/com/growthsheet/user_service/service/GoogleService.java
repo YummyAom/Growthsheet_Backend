@@ -26,7 +26,8 @@ import com.growthsheet.user_service.entity.UserRole;
 import com.growthsheet.user_service.respository.UserRepository;
 import com.growthsheet.user_service.security.Jwtutil;
 
-import io.jsonwebtoken.io.IOException;
+import java.io.IOException;
+
 import jakarta.servlet.http.HttpServletResponse;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -37,18 +38,17 @@ public class GoogleService {
     private final UserRepository userRepository;
     private final Jwtutil jwtUtil;
     private final AuthService authService;
-    private final GoogleService googleService;
 
     public GoogleService(
             UserRepository userRepository,
             Jwtutil jwtUtil,
-            AuthService authService,
-            GoogleService googleService) {
+            AuthService authService) {
+
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authService = authService;
-        this.googleService = googleService;
     }
+
 
     @Value("${google.client-id}")
     private String googleClientId;
