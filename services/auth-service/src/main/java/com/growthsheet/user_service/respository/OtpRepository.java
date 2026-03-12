@@ -10,4 +10,5 @@ import com.growthsheet.user_service.entity.OtpToken;
 public interface OtpRepository extends JpaRepository<OtpToken, UUID> {
     Optional<OtpToken> findByEmailAndOtp(String email, String otp);
     void deleteByEmail(String email);
+    
 }

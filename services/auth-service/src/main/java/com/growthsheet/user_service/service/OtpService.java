@@ -25,8 +25,7 @@ public class OtpService {
     public void sendOtp(String email) {
         otpRep.deleteByEmail(email);
         String otp = String.valueOf(
-                ThreadLocalRandom.current()
-                        .nextInt(10000, 99999));
+                ThreadLocalRandom.current().nextInt(100000, 999999));
         OtpToken token = new OtpToken();
         token.setEmail(email);
         token.setOtp(otp);

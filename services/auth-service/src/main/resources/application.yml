@@ -1,28 +1,40 @@
 server:
   port: ${AUTHSERVICE_PORT}
+
 spring:
+  application:
+    name: auth-service
   data:
     redis:
       url: ${REDIS_URL}
-      # host: ${REDIS_HOST}
-      # port: ${REDIS_PORT}
-      # password: ${REDIS_PASSWORD}
-      # connect-timeout: 2000ms
-  application:
-    name: auth-service
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 google:
   client-id: ${GOOGLE_ID}
   android-id: ${ANDROID_GOOGLE_ID}
   ios-id: ${IOS_GOOGLE_ID}
+
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXP_MS}
+
 resend:
   apikey: ${RESEND_API_KEY}
+
 cloudinary:
   url: ${CLOUDINARY_URL}
 
