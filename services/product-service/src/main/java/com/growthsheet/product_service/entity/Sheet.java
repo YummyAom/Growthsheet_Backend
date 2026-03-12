@@ -3,6 +3,7 @@ package com.growthsheet.product_service.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Entity
@@ -74,20 +75,23 @@ public class Sheet {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
     @OneToMany(mappedBy = "sheet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private List<SheetImage> previewImages = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-        name = "sheet_hashtags",
-        joinColumns = @JoinColumn(name = "sheet_id"),
-        inverseJoinColumns = @JoinColumn(name = "hashtag_id")
-    )
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "sheet_hashtags", joinColumns = @JoinColumn(name = "sheet_id"), inverseJoinColumns = @JoinColumn(name = "hashtag_id"))
     private Set<Hashtag> hashtags = new HashSet<>();
 
     // ===== No-Args Constructor (JPA Required) =====
-    public Sheet() {}
+    public Sheet() {
+    }
 
     // ===== Lifecycle Hooks =====
     @PrePersist
@@ -102,70 +106,199 @@ public class Sheet {
     }
 
     // ===== Getters and Setters =====
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public UUID getSellerId() { return sellerId; }
-    public void setSellerId(UUID sellerId) { this.sellerId = sellerId; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public University getUniversity() { return university; }
-    public void setUniversity(University university) { this.university = university; }
+    public UUID getSellerId() {
+        return sellerId;
+    }
 
-    public Category getCategory() { return category; }
-    public void setCategory(Category category) { this.category = category; }
+    public void setSellerId(UUID sellerId) {
+        this.sellerId = sellerId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public University getUniversity() {
+        return university;
+    }
 
-    public String getCourseCode() { return courseCode; }
-    public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+    public void setUniversity(University university) {
+        this.university = university;
+    }
 
-    public String getCourseName() { return courseName; }
-    public void setCourseName(String courseName) { this.courseName = courseName; }
+    public Category getCategory() {
+        return category;
+    }
 
-    public String getFaculty() { return faculty; }
-    public void setFaculty(String faculty) { this.faculty = faculty; }
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 
-    public Integer getStudyYear() { return studyYear; }
-    public void setStudyYear(Integer studyYear) { this.studyYear = studyYear; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getAcademicYear() { return academicYear; }
-    public void setAcademicYear(String academicYear) { this.academicYear = academicYear; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getCourseCode() {
+        return courseCode;
+    }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
 
-    public String getFileUrl() { return fileUrl; }
-    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+    public String getCourseName() {
+        return courseName;
+    }
 
-    public Integer getPageCount() { return pageCount; }
-    public void setPageCount(Integer pageCount) { this.pageCount = pageCount; }
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
 
-    public SheetStatus getStatus() { return status; }
-    public void setStatus(SheetStatus status) { this.status = status; }
+    public String getFaculty() {
+        return faculty;
+    }
 
-    public String getAdminNote() { return adminNote; }
-    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
+    public void setFaculty(String faculty) {
+        this.faculty = faculty;
+    }
 
-    public Boolean getIsPublished() { return isPublished; }
-    public void setIsPublished(Boolean isPublished) { this.isPublished = isPublished; }
+    public Integer getStudyYear() {
+        return studyYear;
+    }
 
-    public BigDecimal getAverageRating() { return averageRating; }
-    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
+    public void setStudyYear(Integer studyYear) {
+        this.studyYear = studyYear;
+    }
 
-    public Integer getReviewCount() { return reviewCount; }
-    public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
+    public String getAcademicYear() {
+        return academicYear;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
 
-    public List<SheetImage> getPreviewImages() { return previewImages; }
-    public void setPreviewImages(List<SheetImage> previewImages) { this.previewImages = previewImages; }
+    public String getDescription() {
+        return description;
+    }
 
-    public Set<Hashtag> getHashtags() { return hashtags; }
-    public void setHashtags(Set<Hashtag> hashtags) { this.hashtags = hashtags; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
+    }
+
+    public Integer getPageCount() {
+        return pageCount;
+    }
+
+    public void setPageCount(Integer pageCount) {
+        this.pageCount = pageCount;
+    }
+
+    public SheetStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SheetStatus status) {
+        this.status = status;
+    }
+
+    public String getAdminNote() {
+        return adminNote;
+    }
+
+    public void setAdminNote(String adminNote) {
+        this.adminNote = adminNote;
+    }
+
+    public Boolean getIsPublished() {
+        return isPublished;
+    }
+
+    public void setIsPublished(Boolean isPublished) {
+        this.isPublished = isPublished;
+    }
+
+    public BigDecimal getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(BigDecimal averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<SheetImage> getPreviewImages() {
+        return previewImages;
+    }
+
+    public void setPreviewImages(List<SheetImage> previewImages) {
+        this.previewImages = previewImages;
+    }
+
+    public Set<Hashtag> getHashtags() {
+        return hashtags;
+    }
+
+    public void setHashtags(Set<Hashtag> hashtags) {
+        this.hashtags = hashtags;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public OffsetDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(OffsetDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }

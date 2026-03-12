@@ -18,6 +18,7 @@ public interface SheetRepository extends JpaRepository<Sheet, UUID> {
         // SheetRepository.java
 
         List<Sheet> findBySellerId(UUID sellerId);
+        List<Sheet> findAllBySellerId(UUID sellerId);
 
         @EntityGraph(attributePaths = {
                         "university",

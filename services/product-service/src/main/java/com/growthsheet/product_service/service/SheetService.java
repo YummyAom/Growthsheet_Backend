@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.growthsheet.product_service.dto.PageResponse;
+
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.stream.Stream;
@@ -574,21 +576,20 @@ public class SheetService {
          */
         @Transactional
         public void softDeleteSheet(UUID sheetId, UUID sellerId) {
-                // 1. ดึงข้อมูลชีท
+
                 Sheet sheet = sheetRepo.findById(sheetId)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "ไม่พบข้อมูลชีทที่ต้องการลบ"));
 
-                // 2. ตรวจสอบว่าผู้ที่สั่งลบคือเจ้าของชีทจริงๆ
                 if (!sheet.getSellerId().equals(sellerId)) {
                         throw new ResponseStatusException(
                                         HttpStatus.FORBIDDEN, "คุณไม่มีสิทธิ์ลบชีทนี้");
                 }
 
-                // 3. ปรับสถานะเป็น unpublished (Soft Delete)
+                sheet.setIsDeleted(true);
                 sheet.setIsPublished(false);
+                sheet.setDeletedAt(OffsetDateTime.now());
 
-                // 4. บันทึกการเปลี่ยนแปลง
                 sheetRepo.save(sheet);
         }
 }

@@ -13,13 +13,29 @@ public class User {
     @Id
     private UUID id;
 
-    private String name;      // << เพิ่มอันนี้
+    private String name; // << เพิ่มอันนี้
     private String username;
     private String email;
 
-    public UUID getId() { return id; }
-    public String getName() { return name; }
-    public String getUsername() { return username; }
-    public String getEmail() { return email; }
-}
+    private String faculty;
 
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getFaculty() { 
+        return faculty;
+    }
+}
