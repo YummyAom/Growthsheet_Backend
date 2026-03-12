@@ -324,9 +324,9 @@ public class AuthService {
                                                 "token_type", "bearer",
                                                 "expires_in", TOKEN_TTL.getSeconds(),
                                                 "session_token", sessionToken,
-                                                "refresh_token", refreshToken))
-                                ;
+                                                "refresh_token", refreshToken));
         }
+
         // ===== เปลี่ยนรหัสผ่าน =====
         public void changePassword(UUID userId, ChangePasswordRequest req) {
                 User user = userRepo.findById(userId)
@@ -378,11 +378,16 @@ public class AuthService {
                 userRepo.save(user);
         }
 
-        // ===== ลบบัญชี (Soft Delete) =====
-        public void deleteAccount(UUID userId) {
+        public void deleteAccount(UUID userId, String password) {
                 User user = userRepo.findById(userId)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "ไม่พบผู้ใช้งาน"));
+
+                // ✅ เช็ครหัสผ่านก่อน
+                if (!passwordUtil.matches(password, user.getPassword())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST, "รหัสผ่านไม่ถูกต้อง");
+                }
 
                 user.setEnabled(false);
                 userRepo.save(user);

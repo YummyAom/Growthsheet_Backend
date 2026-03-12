@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.growthsheet.user_service.dto.requests.GoogleLoginRequest;
 import com.growthsheet.user_service.dto.requests.ChangePasswordRequest;
+import com.growthsheet.user_service.dto.requests.DeleteAccountRequest;
 import com.growthsheet.user_service.dto.requests.ForgotPasswordRequest;
 import com.growthsheet.user_service.dto.requests.LoginRequest;
 import com.growthsheet.user_service.dto.requests.RegisterRequest;
@@ -174,12 +175,12 @@ public class AuthController {
                 "message", "เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบใหม่");
     }
 
-    // ===== ลบบัญชี (Soft Delete — ต้อง login) =====
     @DeleteMapping("/delete-account")
     public Map<String, String> deleteAccount(
-            @RequestHeader("X-USER-ID") UUID userId) {
+            @RequestHeader("X-USER-ID") UUID userId,
+            @Valid @RequestBody DeleteAccountRequest req) { // ✅ เพิ่ม body
 
-        authService.deleteAccount(userId);
+        authService.deleteAccount(userId, req.password());
 
         return Map.of(
                 "status", "success",
