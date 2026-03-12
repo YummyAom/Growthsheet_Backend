@@ -110,6 +110,19 @@ public class SheetController {
         return sheetService.getPurchasedSheets(userId, pageable);
     }
 
+    @GetMapping("/{sheetId}/purchase-status")
+    public ResponseEntity<Map<String, Object>> checkPurchaseStatus(
+            @PathVariable UUID sheetId,
+            @RequestHeader("X-USER-ID") UUID userId) {
+
+        boolean hasPurchased = sheetService.isSheetPurchased(sheetId, userId);
+
+        return ResponseEntity.ok(Map.of(
+                "hasPurchased", hasPurchased,
+                "userId", userId // ส่งกลับไปให้ Mobile ใช้เช็คว่าเป็นเจ้าของ (isOwner) หรือไม่
+        ));
+    }
+
     @GetMapping("/{id}/open")
     public ResponseEntity<String> openProduct(
             @PathVariable UUID id,

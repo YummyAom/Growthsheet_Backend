@@ -237,6 +237,18 @@ public class SheetService {
 
                 return sheet.getFileUrl();
         }
+        // ใน SheetService.java
+
+        public boolean isSheetPurchased(UUID sheetId, UUID userId) {
+                try {
+                        // ใช้ orderClient ที่คุณมีอยู่แล้วในการเช็คกับ Order Service โดยตรง
+                        // ซึ่งคุณใช้ตัวนี้อยู่แล้วใน getSheetFileUrl และ getDownloadInfo
+                        return orderClient.hasPurchased(userId, sheetId);
+                } catch (Exception e) {
+                        // กรณี Order Service ล่ม ให้ return false ไว้ก่อนเพื่อความปลอดภัย
+                        return false;
+                }
+        }
 
         public DownloadResponse getDownloadInfo(UUID sheetId, UUID userId) {
 
