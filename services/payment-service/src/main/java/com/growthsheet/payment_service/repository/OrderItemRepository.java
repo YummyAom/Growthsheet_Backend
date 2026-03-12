@@ -22,9 +22,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
                        STRING_AGG(oi.sheet_name, ', ') as sheet_names,
                        u.id as seller_id
                 FROM order_items oi
-                JOIN users u ON u.username = oi.seller_name
+                JOIN users u ON u.name = oi.seller_name
                 WHERE oi.order_id = :orderId
-                  AND (oi.is_refunded = false OR oi.is_refunded IS NULL)
+                  AND oi.is_refunded IS NOT TRUE
                 GROUP BY oi.seller_name, u.id
             """, nativeQuery = true)
     List<SellerSummary> findSellerSummaryByOrderId(@Param("orderId") UUID orderId);
