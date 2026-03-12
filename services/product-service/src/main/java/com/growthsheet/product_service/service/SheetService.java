@@ -82,6 +82,7 @@ public class SheetService {
                 this.orderClient = orderClient;
                 this.hashtagRepository = hashtagRepository;
         }
+
         public PageResponse<SheetCardResponse> getPurchasedSheets(UUID userId, Pageable pageable) {
 
                 // 1. ดึงข้อมูล Order ที่ชำระเงินแล้วทั้งหมดมาจาก Order Service
@@ -192,9 +193,15 @@ public class SheetService {
 
         private SheetCardResponse toSheetCardResponse(Sheet sheet) {
 
+                System.out.println(">>> mapping sheetId=" + sheet.getId()
+                                + " status=" + sheet.getStatus()
+                                + " isPublished=" + sheet.getIsPublished());
+
                 SellerDTO seller = userRepo.findById(sheet.getSellerId())
                                 .map(u -> new SellerDTO(u.getId(), u.getName()))
                                 .orElse(null);
+
+                System.out.println(">>> seller=" + seller);
 
                 return sheetCardMapper.toResponse(sheet, seller);
         }
@@ -474,6 +481,7 @@ public class SheetService {
 
                 sheet.setStatus(SheetStatus.APPROVED);
                 sheet.setIsPublished(true);
+                sheetRepo.save(sheet);
         }
 
         @Transactional

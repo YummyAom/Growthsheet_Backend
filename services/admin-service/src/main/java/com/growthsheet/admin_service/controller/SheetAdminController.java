@@ -77,13 +77,25 @@ public class SheetAdminController {
             @RequestHeader("X-USER-ID") UUID adminId) {
 
         var sheet = productClient.getSheetById(sheetId);
-        String adminDownload = productClient.adminDownload(sheetId).getBody().fileUrl();
         UUID sellerId = sheet.getSeller().getId();
+
+        // ✅ approve ก่อน แยก transaction
         sheetAdminService.approve(sheetId, adminId, sellerId);
-        analysisClient.analyzeSheet(
-                adminDownload,
-                sheetId.toString(),
-                adminServerUrl + "/webhook/analysis");
+
+        // ✅ แยก analysis ออกมา และ handle error แยก
+        try {
+            var download = productClient.adminDownload(sheetId).getBody();
+            if (download != null && download.fileUrl() != null) {
+                analysisClient.analyzeSheet(
+                        download.fileUrl(),
+                        sheetId.toString(),
+                        adminServerUrl + "/webhook/analysis");
+            }
+        } catch (Exception e) {
+            // log แต่ไม่ให้ล้ม approve
+            System.err.println("Analysis failed: " + e.getMessage());
+        }
+
         return "อนุมัติชีทเรียบร้อยแล้ว";
     }
 

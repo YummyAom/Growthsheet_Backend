@@ -16,7 +16,7 @@ public record ProductResponseDTO(
     BigDecimal price,
 
     String imageUrl,
-    String previewUrl,
+    String fileUrl,
 
     UniversityDTO university,
     CategoryDTO category,
