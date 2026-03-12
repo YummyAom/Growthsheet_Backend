@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.growthsheet.payment_service.config.client.NotificationClient;
 import com.growthsheet.payment_service.config.client.OrderClient;
+import com.growthsheet.payment_service.dto.NotificationRequest;
 import com.growthsheet.payment_service.dto.PaymentStatus;
 import com.growthsheet.payment_service.entity.OrderItem;
 import com.growthsheet.payment_service.entity.Payment;
@@ -42,8 +43,7 @@ public class PaymentService {
             NotificationClient notificationClient,
             OrderItemRepository orderItemRepository,
             @Value("${stripe.public_key}") String publicKey,
-            @Value("${stripe.secret_key}") String secretKey
-        ) {
+            @Value("${stripe.secret_key}") String secretKey) {
 
         this.paymentRepository = paymentRepository;
         this.orderClient = orderClient;
@@ -136,16 +136,13 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         try {
-            orderClient.markOrderAsPaid(orderId);
-        } catch (Exception e) {
-            log.error("Order update failed", e);
-        }
+            NotificationRequest req = new NotificationRequest();
+            req.setUserId(payment.getUserId());
+            req.setTitle("ชำระเงินสำเร็จ 🎉");
+            req.setMessage("คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
 
-        try {
-            notificationClient.createNotification(
-                    payment.getUserId(),
-                    "ชำระเงินสำเร็จ 🎉",
-                    "คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
+            notificationClient.createNotification(req);
+
         } catch (Exception e) {
             log.error("Notification failed", e);
         }
@@ -156,11 +153,14 @@ public class PaymentService {
 
             for (OrderItem item : items) {
 
-                notificationClient.createNotification(
-                        item.getSellerId(), 
-                        "มีคนซื้อชีทของคุณ 🎉",
+                NotificationRequest req = new NotificationRequest();
+                req.setUserId(item.getSellerId());
+                req.setTitle("มีคนซื้อชีทของคุณ 🎉");
+                req.setMessage(
                         "ชีท \"" + item.getSheetName() +
                                 "\" ถูกซื้อแล้ว ราคา " + item.getPrice() + " บาท");
+
+                notificationClient.createNotification(req);
             }
 
         } catch (Exception e) {

@@ -1,9 +1,9 @@
 package com.growthsheet.payment_service.config.client;
 
-import java.util.UUID;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import com.growthsheet.payment_service.dto.NotificationRequest;
 
 @FeignClient(
     name = "notification-service",
@@ -11,10 +11,8 @@ import org.springframework.web.bind.annotation.*;
 )
 public interface NotificationClient {
 
-    @PostMapping("/notifications")
+    @PostMapping("/api/notifications")
     void createNotification(
-            @RequestHeader("X-USER-ID") UUID userId,
-            @RequestParam String title,
-            @RequestParam String message
+        @RequestBody NotificationRequest request
     );
 }
