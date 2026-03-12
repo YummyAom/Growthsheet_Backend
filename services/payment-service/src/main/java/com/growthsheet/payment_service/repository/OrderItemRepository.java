@@ -16,6 +16,7 @@ import com.growthsheet.payment_service.dto.dashboard.MonthlySalesProjection;
 import java.util.List;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
+    List<OrderItem> findByOrderId(UUID orderId);
 
     @Query(value = """
                 SELECT COALESCE(SUM(oi.price) * 0.85, 0)

@@ -1,6 +1,7 @@
 package com.growthsheet.payment_service.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.growthsheet.payment_service.config.client.NotificationClient;
 import com.growthsheet.payment_service.config.client.OrderClient;
 import com.growthsheet.payment_service.dto.PaymentStatus;
+import com.growthsheet.payment_service.entity.OrderItem;
 import com.growthsheet.payment_service.entity.Payment;
+import com.growthsheet.payment_service.repository.OrderItemRepository;
 import com.growthsheet.payment_service.repository.PaymentRepository;
 import com.stripe.Stripe;
 import com.stripe.model.Event;
@@ -26,6 +29,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
     private final NotificationClient notificationClient;
+    private final OrderItemRepository orderItemRepository;
     @Value("${stripe.mobile.success-url}")
     private String successUrl;
 
@@ -36,12 +40,15 @@ public class PaymentService {
             OrderClient orderClient,
             PaymentRepository paymentRepository,
             NotificationClient notificationClient,
+            OrderItemRepository orderItemRepository,
             @Value("${stripe.public_key}") String publicKey,
-            @Value("${stripe.secret_key}") String secretKey) {
+            @Value("${stripe.secret_key}") String secretKey
+        ) {
 
         this.paymentRepository = paymentRepository;
         this.orderClient = orderClient;
         this.notificationClient = notificationClient;
+        this.orderItemRepository = orderItemRepository;
         Stripe.apiKey = secretKey;
     }
 
@@ -141,6 +148,23 @@ public class PaymentService {
                     "คำสั่งซื้อ " + orderId + " ชำระเงินเรียบร้อยแล้ว");
         } catch (Exception e) {
             log.error("Notification failed", e);
+        }
+        // ===== แจ้งผู้ขาย =====
+        try {
+
+            List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+
+            for (OrderItem item : items) {
+
+                notificationClient.createNotification(
+                        item.getSellerId(), 
+                        "มีคนซื้อชีทของคุณ 🎉",
+                        "ชีท \"" + item.getSheetName() +
+                                "\" ถูกซื้อแล้ว ราคา " + item.getPrice() + " บาท");
+            }
+
+        } catch (Exception e) {
+            log.error("Seller notification failed", e);
         }
     }
 

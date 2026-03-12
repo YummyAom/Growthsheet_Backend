@@ -53,31 +53,6 @@ public class PaymentController {
         }
     }
 
-    @PostMapping("/testNoti")
-    public ResponseEntity<?> testNoti(
-            @RequestHeader("X-USER-ID") UUID userId) {
-
-        try {
-
-            notificaiton.createNotification(
-                    userId,
-                    "Test Notification 🚀",
-                    "นี่คือการทดสอบ notification จาก payment-service");
-
-            return ResponseEntity.ok(
-                    Map.of(
-                            "success", true,
-                            "message", "Notification sent"));
-
-        } catch (Exception e) {
-
-            return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                            "success", false,
-                            "error", e.getMessage()));
-        }
-    }
-
     @PostMapping("/create-checkout-session/{orderId}")
     public ResponseEntity<?> createCheckoutSession(
             @RequestHeader("X-USER-ID") UUID userId,
