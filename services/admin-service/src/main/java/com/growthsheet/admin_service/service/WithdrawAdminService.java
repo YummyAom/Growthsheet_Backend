@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.admin_service.config.client.FileClient;
 import com.growthsheet.admin_service.dto.WithdrawalApproveResponse;
+import com.growthsheet.admin_service.dto.WithdrawalDetailDTO;
 import com.growthsheet.admin_service.dto.WithdrawalRejectResponse;
 import com.growthsheet.admin_service.dto.WithdrawalRequestSummaryDTO;
 import com.growthsheet.admin_service.entity.PayoutTransaction;
@@ -106,6 +107,33 @@ public class WithdrawAdminService {
                 withdrawalId,
                 adminComment,
                 WithdrawStatus.REJECTED);
+    }
+
+    public WithdrawalDetailDTO getWithdrawalDetail(UUID id) {
+        WithdrawalRequest wr = withdrawalRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
+
+        SellerDetails sd = wr.getSellerDetails();
+
+        PayoutTransaction pt = payoutTransactionRepository.findByWithdrawalId(id)
+                .orElse(null);
+
+        return WithdrawalDetailDTO.builder()
+                .id(wr.getId())
+                .seller_id(wr.getSellerId())
+                .user_id(wr.getUserId())
+                .sellerFullName(sd != null ? sd.getFullName() : null)
+                .sellerPenName(sd != null ? sd.getPenName() : null)
+                .amount(wr.getAmount())
+                .status(wr.getStatus())
+                .bank_name(wr.getBankName())
+                .bank_account_number(wr.getBankAccountNumber())
+                .bank_account_name(wr.getBankAccountName())
+                .note(wr.getNote())
+                .created_at(wr.getCreatedAt())
+                .slip_url(pt != null ? pt.getSlipUrl() : null)
+                .transferred_at(pt != null ? pt.getTransferredAt() : null)
+                .build();
     }
 
     private WithdrawalRequestSummaryDTO mapToSummaryDTO(WithdrawalRequest wr) {

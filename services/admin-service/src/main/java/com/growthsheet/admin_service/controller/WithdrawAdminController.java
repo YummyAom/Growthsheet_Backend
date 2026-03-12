@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.growthsheet.admin_service.dto.RejectRequest;
+import com.growthsheet.admin_service.dto.WithdrawalDetailDTO;
 import com.growthsheet.admin_service.dto.WithdrawalApproveResponse;
 import com.growthsheet.admin_service.dto.WithdrawalRejectResponse;
 import com.growthsheet.admin_service.dto.WithdrawalRequestSummaryDTO;
@@ -42,9 +43,8 @@ public class WithdrawAdminController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<String> getWithdrawalRequestById(@PathVariable UUID id) {
-        // TODO: implement
-        return ResponseEntity.ok("Withdrawal request detail for id: " + id);
+    public ResponseEntity<WithdrawalDetailDTO> getWithdrawalRequestById(@PathVariable UUID id) {
+        return ResponseEntity.ok(withdrawAdminService.getWithdrawalDetail(id));
     }
 
     @PutMapping("/{id}/approve")
