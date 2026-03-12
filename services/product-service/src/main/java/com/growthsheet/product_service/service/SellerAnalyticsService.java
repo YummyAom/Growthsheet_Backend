@@ -27,7 +27,8 @@ public class SellerAnalyticsService {
                 this.userRepo = userRepo;
         }
 
-        public SellerAnalyticsResponse getSellerAnalytics(UUID sellerId) {
+        // 👈 เพิ่มรับค่า String period
+        public SellerAnalyticsResponse getSellerAnalytics(UUID sellerId, String period) {
 
                 // 1️⃣ ดึง sheet ของ seller
                 List<Sheet> sheets = sheetRepo.findAllBySellerId(sellerId);
@@ -48,6 +49,17 @@ public class SellerAnalyticsService {
                 }
 
                 final Map<UUID, Long> salesMap = salesMapTemp;
+
+                // ⭐ เพิ่มตรงนี้: ดึงยอดขายรายวันแบบระบุช่วงเวลา (7 วัน หรือ 1 เดือน) ⭐
+                List<DailySaleDTO> dailySales = Collections.emptyList();
+                if (!sheetIds.isEmpty()) {
+                        try {
+                                // ส่ง period ไปให้ฝั่ง Order Service จัดการ
+                                dailySales = orderClient.getDailySalesBySheetIds(sheetIds, period);
+                        } catch (Exception e) {
+                                System.err.println("Cannot fetch daily sales: " + e.getMessage());
+                        }
+                }
 
                 // 3️⃣ คำนวณยอดขายรวม
                 long totalSales = salesMap.values().stream()
@@ -93,9 +105,10 @@ public class SellerAnalyticsService {
                                                 entry.getValue()))
                                 .toList();
 
-                // ✅ เพิ่มตรงนี้
+                // ✅ เพิ่ม dailySales ตรงนี้
                 return new SellerAnalyticsResponse(
                                 totalSales,
+                                dailySales,
                                 topSheets,
                                 facultyDistribution);
         }

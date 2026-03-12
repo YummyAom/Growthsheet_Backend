@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.growthsheet.product_service.config.FeignOkHttpConfig;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.dto.client.OrderResponse;
+import com.growthsheet.product_service.dto.response.DailySaleDTO;
+
 import java.util.List;
 import java.util.Map;
 
@@ -36,4 +38,9 @@ public interface OrderClient {
 
         @PostMapping("/api/order/internal/buyer-ids")
         List<UUID> getBuyerIdsBySheetIds(@RequestBody List<UUID> sheetIds);
+
+        @GetMapping("/api/order/daily-sales")
+        List<DailySaleDTO> getDailySalesBySheetIds(
+                        @RequestParam("sheetIds") List<UUID> sheetIds,
+                        @RequestParam("period") String period);
 }

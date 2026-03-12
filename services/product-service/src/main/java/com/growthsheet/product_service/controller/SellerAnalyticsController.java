@@ -20,10 +20,11 @@ public class SellerAnalyticsController {
 
     @GetMapping("/summary")
     public ResponseEntity<SellerAnalyticsResponse> getSummary(
-            @RequestHeader("X-USER-ID") UUID sellerId) {
+            @RequestHeader("X-USER-ID") UUID sellerId,
+            @RequestParam(defaultValue = "7d") String period) { // 👈 เพิ่มรับพารามิเตอร์ period (ค่าเริ่มต้น 7 วัน)
 
-        SellerAnalyticsResponse response =
-                analyticsService.getSellerAnalytics(sellerId);
+        SellerAnalyticsResponse response = analyticsService.getSellerAnalytics(sellerId, period); // 👈 ส่ง period
+                                                                                                  // เข้าไปใน service
 
         return ResponseEntity.ok(response);
     }

@@ -1,7 +1,10 @@
 package com.growthsheet.order_service.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.Map;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.growthsheet.order_service.dto.PageResponse;
 import com.growthsheet.order_service.dto.request.CheckoutRequest;
+import com.growthsheet.order_service.dto.response.DailySaleDTO;
 import com.growthsheet.order_service.dto.response.OrderResponse;
 import com.growthsheet.order_service.entity.Cart;
 import com.growthsheet.order_service.entity.CartItem;
@@ -173,6 +177,7 @@ public class OrderService {
         res.setUserId(order.getUserId());
         res.setStatus(order.getStatus());
         res.setTotalPrice(order.getTotalPrice());
+        res.setCreatedAt(order.getCreatedAt());
         res.setItems(items);
 
         return res;
@@ -259,5 +264,41 @@ public class OrderService {
                         .map(item -> order.getUserId()))
                 .distinct()
                 .toList();
+    }
+
+    public List<DailySaleDTO> getDailySalesBySheetIds(List<UUID> sheetIds, String period) {
+        if (sheetIds == null || sheetIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // กำหนดจำนวนวันที่จะย้อนหลัง
+        int daysToLookBack = "1m".equalsIgnoreCase(period) ? 30 : 7;
+
+        // หาจุดเริ่มต้นเวลา
+        LocalDateTime startDate = LocalDateTime.now().minusDays(daysToLookBack).withHour(0).withMinute(0).withSecond(0);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM");
+
+        // ดึง Order ที่ 'PAID' ทั้งหมด -> กรองเฉพาะที่อยู่ในช่วงเวลา -> แกะเอาเฉพาะ
+        // Item ที่ตรงกับ sheetIds -> จัดกลุ่มตามวันที่
+        Map<String, Long> groupedSales = orderRepo.findAllByStatus("PAID").stream()
+                .filter(order -> order.getCreatedAt() != null && order.getCreatedAt().isAfter(startDate))
+                .flatMap(order -> order.getItems().stream()
+                        .filter(item -> sheetIds.contains(item.getSheetId()))
+                        .filter(item -> item.getIsRefunded() == null || !item.getIsRefunded())
+                        // จับคู่ Item กับวันที่ของ Order ตัวแม่
+                        .map(item -> order.getCreatedAt().format(formatter)))
+                .collect(Collectors.groupingBy(
+                        dateStr -> dateStr,
+                        Collectors.counting()));
+
+        // เติมวันที่ให้ครบแม้จะขายไม่ได้เลย (Fill zero)
+        List<DailySaleDTO> result = new ArrayList<>();
+        for (int i = daysToLookBack - 1; i >= 0; i--) {
+            String dateStr = LocalDateTime.now().minusDays(i).format(formatter);
+            long amount = groupedSales.getOrDefault(dateStr, 0L);
+            result.add(new DailySaleDTO(dateStr, amount));
+        }
+
+        return result;
     }
 }

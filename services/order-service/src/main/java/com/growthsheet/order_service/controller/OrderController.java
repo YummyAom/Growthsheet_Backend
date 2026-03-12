@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.growthsheet.order_service.dto.PageResponse;
 import com.growthsheet.order_service.dto.request.CheckoutRequest;
+import com.growthsheet.order_service.dto.response.DailySaleDTO;
 import com.growthsheet.order_service.dto.response.OrderResponse;
 import com.growthsheet.order_service.entity.Order;
 import com.growthsheet.order_service.service.OrderService;
@@ -128,5 +129,15 @@ public class OrderController {
     public ResponseEntity<List<UUID>> getBuyerIdsBySheetIds(
             @RequestBody List<UUID> sheetIds) {
         return ResponseEntity.ok(orderService.getBuyerIdsBySheetIds(sheetIds));
+    }
+
+    // อย่าลืม import DailySaleDTO และ UUID
+    @GetMapping("/daily-sales")
+    public ResponseEntity<List<DailySaleDTO>> getDailySales(
+            @RequestParam List<UUID> sheetIds,
+            @RequestParam(defaultValue = "7d") String period) {
+
+        List<DailySaleDTO> sales = orderService.getDailySalesBySheetIds(sheetIds, period);
+        return ResponseEntity.ok(sales);
     }
 }

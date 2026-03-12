@@ -1,6 +1,7 @@
 package com.growthsheet.order_service.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class OrderResponse {
     private UUID userId;
     private String status;
     private BigDecimal totalPrice;
-
+    private LocalDateTime createdAt;
     private List<Item> items;
 
     @Getter
