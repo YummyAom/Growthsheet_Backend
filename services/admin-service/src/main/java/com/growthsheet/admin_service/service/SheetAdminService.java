@@ -57,13 +57,24 @@ public class SheetAdminService {
 
         productClient.rejectSheet(sheetId, internalServiceToken, request); // ✅ ส่ง token + request
 
-        SheetReviewLog log = new SheetReviewLog();
-        log.setSheetId(sheetId);
-        log.setSellerId(sellerId);
-        log.setAdminId(adminId);
-        log.setAction("REJECTED");
-        log.setComment(request.getComment());
+        SheetReviewLog reviewLog = new SheetReviewLog();
+        reviewLog.setSheetId(sheetId);
+        reviewLog.setSellerId(sellerId);
+        reviewLog.setAdminId(adminId);
+        reviewLog.setAction("REJECTED");
+        reviewLog.setComment(request.getComment());
 
-        logRepository.save(log);
+        logRepository.save(reviewLog);
+
+        NotificationRequest notification = new NotificationRequest();
+        notification.setUserId(sellerId);
+        notification.setTitle("ชีทของคุณถูกปฏิเสธ");
+        notification.setMessage("ชีทที่คุณอัปโหลดไม่ผ่านการตรวจสอบ กรุณาแก้ไขและส่งใหม่");
+
+        try {
+            notificationClient.createNotification(notification);
+        } catch (Exception e) {
+            log.error("Failed to send reject notification for sheetId={}", sheetId, e);
+        }
     }
 }
