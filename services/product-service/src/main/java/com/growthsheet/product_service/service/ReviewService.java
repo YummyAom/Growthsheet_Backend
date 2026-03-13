@@ -16,12 +16,14 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.growthsheet.product_service.config.client.NotificationClient;
 import com.growthsheet.product_service.config.client.OrderClient;
 import com.growthsheet.product_service.config.client.UserClient;
 import com.growthsheet.product_service.dto.PageResponse;
 import com.growthsheet.product_service.dto.UserDTO;
 import com.growthsheet.product_service.dto.UserProfileResponse;
 import com.growthsheet.product_service.dto.client.OrderResponse;
+import com.growthsheet.product_service.dto.request.NotificationRequest;
 import com.growthsheet.product_service.dto.request.SheetImageRequest;
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
 import com.growthsheet.product_service.dto.response.PendingReviewResponse;
@@ -43,6 +45,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepo;
     private final OrderClient orderClient;
     private final UserClient userClient;
+    private final NotificationClient notificationClient;
 
     // เราลบ SheetReview ออกจาก Constructor
     public ReviewService(
@@ -50,12 +53,15 @@ public class ReviewService {
             ReviewRepository reviewRepo,
             OrderClient orderClient,
             UserClient userClient,
-            SheetImageRepository sheetImageRepo) {
+            SheetImageRepository sheetImageRepo,
+            NotificationClient notificationClient
+        ) {
         this.sheetRepo = sheetRepo;
         this.reviewRepo = reviewRepo;
         this.orderClient = orderClient;
         this.userClient = userClient;
         this.sheetImageRepo = sheetImageRepo;
+        this.notificationClient = notificationClient;
     }
 
     @Transactional
@@ -72,6 +78,14 @@ public class ReviewService {
         review.setRating(request.rating());
         reviewRepo.save(review);
         updateSheetRating(sheetId);
+
+        Sheet sheet = sheetRepo.findById(sheetId)
+            .orElseThrow(() -> new RuntimeException("ไม่พบชีทสรุปชุดนี้"));
+        NotificationRequest noti = new NotificationRequest();
+        noti.setUserId(sheet.getSellerId());
+        noti.setTitle("มีรีวิวใหม่");
+        noti.setMessage("ชีท " + sheet.getTitle() + " ได้รับรีวิวใหม่ ⭐");
+        notificationClient.createNotification(null);
         return "บันทึกรีวิวเรียบร้อยแล้ว";
     }
 

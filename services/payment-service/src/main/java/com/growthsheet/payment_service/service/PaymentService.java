@@ -160,14 +160,14 @@ public class PaymentService {
 
             List<SellerSummary> items = orderItemRepository.findSellerSummaryByOrderId(orderId);
             for (SellerSummary item : items) {
-                System.out.println("=== seller_id: " + item.getSeller_id());
-                System.out.println("=== seller_name: " + item.getSeller_name());
-                System.out.println("=== total: " + item.getTotal());
+                // System.out.println("=== seller_id: " + item.getSeller_id());
+                // System.out.println("=== seller_name: " + item.getSeller_name());
+                // System.out.println("=== total: " + item.getTotal());
 
                 NotificationRequest req = new NotificationRequest();
                 req.setUserId(item.getSeller_id());
                 req.setTitle("มีคนซื้อชีทของคุณ 🎉");
-                req.setMessage("ชีท \"" + item.getSeller_name() + "\" ถูกซื้อแล้ว ราคา " + item.getTotal() + " บาท");
+                req.setMessage("ชีท \"" + item.getSheet_names() + "\" ถูกซื้อแล้ว ราคา " + item.getTotal() + " บาท");
 
                 notificationClient.createNotification(req);
             }
