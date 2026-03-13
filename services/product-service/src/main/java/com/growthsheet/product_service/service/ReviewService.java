@@ -8,10 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,7 +21,6 @@ import com.growthsheet.product_service.dto.UserDTO;
 import com.growthsheet.product_service.dto.UserProfileResponse;
 import com.growthsheet.product_service.dto.client.OrderResponse;
 import com.growthsheet.product_service.dto.request.NotificationRequest;
-import com.growthsheet.product_service.dto.request.SheetImageRequest;
 import com.growthsheet.product_service.dto.request.SheetReviewRequest;
 import com.growthsheet.product_service.dto.response.PendingReviewResponse;
 import com.growthsheet.product_service.dto.response.ReviewResponse;
@@ -85,7 +81,7 @@ public class ReviewService {
         noti.setUserId(sheet.getSellerId());
         noti.setTitle("มีรีวิวใหม่");
         noti.setMessage("ชีท " + sheet.getTitle() + " ได้รับรีวิวใหม่ ⭐");
-        notificationClient.createNotification(null);
+        notificationClient.createNotification(noti);
         return "บันทึกรีวิวเรียบร้อยแล้ว";
     }
 
