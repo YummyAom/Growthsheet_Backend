@@ -89,7 +89,7 @@ public class AuthService {
 
                         }
 
-                        otpService.sendOtp(user.getEmail());
+                        // otpService.sendOtp(user.getEmail());
                         return buildResponse(user);
                 }
 
@@ -101,7 +101,7 @@ public class AuthService {
                 user.setRole(UserRole.BUYER);
                 user.setEnabled(true);
                 userRepo.save(user);
-                otpService.sendOtp(user.getEmail());
+                // otpService.sendOtp(user.getEmail());
 
                 return buildResponse(user);
         }
