@@ -71,11 +71,6 @@ public class SellerAdminController {
                 userId,
                 SellerStatus.APPROVED,
                 null,
-
-
-
-
-                
                 adminId);
     }
 
